@@ -1,0 +1,155 @@
+local uis = game:GetService("UserInputService")
+local vim = game:GetService("VirtualInputManager")
+local player = game.Players.LocalPlayer
+
+local running = false
+local cps = 12
+local draggingSlider = false
+local draggingCrosshair = false
+
+-- GUI
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "LEFTAC"
+gui.ResetOnSpawn = false
+
+local gui2 = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "LEFTAC"
+gui.ResetOnSpawn = false
+
+-- Frame
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 120, 0, 80)
+frame.Position = UDim2.new(1, -130, 0, 30)
+frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+frame.BackgroundTransparency = 0.2
+frame.BorderSizePixel = 0
+frame.Visible = false
+frame.Active = true
+frame.Draggable = true
+
+-- Toggle Button
+local toggle = Instance.new("TextButton", frame)
+toggle.Size = UDim2.new(0, 100, 0, 30)
+toggle.Position = UDim2.new(0, 10, 0, 10)
+toggle.Text = "Auto OFF"
+toggle.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+toggle.TextColor3 = Color3.new(1, 1, 1)
+toggle.Font = Enum.Font.SourceSansBold
+toggle.TextSize = 14
+
+-- CPS Label
+local cpsLabel = Instance.new("TextLabel", frame)
+cpsLabel.Size = UDim2.new(0, 100, 0, 20)
+cpsLabel.Position = UDim2.new(0, 10, 0, 45)
+cpsLabel.Text = "CPS: " .. cps
+cpsLabel.BackgroundTransparency = 1
+cpsLabel.TextColor3 = Color3.new(1, 1, 1)
+cpsLabel.Font = Enum.Font.SourceSans
+cpsLabel.TextSize = 12
+
+-- Slider Bar
+local bar = Instance.new("Frame", frame)
+bar.Size = UDim2.new(0, 100, 0, 16)
+bar.Position = UDim2.new(0, 10, 0, 65)
+bar.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+
+-- Slider Knob
+local knob = Instance.new("TextButton", bar)
+knob.Size = UDim2.new(0, 16, 1, 0)
+knob.Position = UDim2.new(0, (cps / 30) * 84, 0, 0)
+knob.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+knob.Text = ""
+knob.AutoButtonColor = false
+
+-- Open Button
+local openBtn = Instance.new("TextButton", gui)
+openBtn.Size = UDim2.new(0, 120, 0, 30)
+openBtn.Position = UDim2.new(1, -130, 0, 0)
+openBtn.Text = "Open LEFTAC"
+openBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+openBtn.TextColor3 = Color3.new(1, 1, 1)
+openBtn.Font = Enum.Font.SourceSansBold
+openBtn.TextSize = 14
+
+-- Crosshair
+local crosshair = Instance.new("Frame", gui2)
+crosshair.Size = UDim2.new(0, 15, 0, 15)
+crosshair.Position = UDim2.new(0.5, -10, 0.5, -10)
+crosshair.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+crosshair.BorderSizePixel = 0
+crosshair.BackgroundTransparency = 0.3
+crosshair.Active = true
+
+-- Drag Crosshair
+crosshair.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        draggingCrosshair = true
+    end
+end)
+
+crosshair.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        draggingCrosshair = false
+    end
+end)
+
+uis.TouchMoved:Connect(function(input)
+    if draggingCrosshair then
+        local pos = input.Position
+        crosshair.Position = UDim2.new(0, pos.X - 10, 0, pos.Y - 10)
+    elseif draggingSlider then
+        local absPos = bar.AbsolutePosition.X
+        local size = bar.AbsoluteSize.X
+        local x = input.Position.X
+        local relative = math.clamp(x - absPos, 0, size - knob.AbsoluteSize.X)
+        knob.Position = UDim2.new(0, relative, 0, 0)
+        local ratio = relative / (size - knob.AbsoluteSize.X)
+        cps = math.clamp(math.floor(1 + (30 - 1) * ratio + 0.5), 1, 30)
+        cpsLabel.Text = "CPS: " .. cps
+    end
+end)
+
+-- Drag Slider
+knob.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        draggingSlider = true
+    end
+end)
+
+knob.InputEnded:Connect(function(input)
+if input.UserInputType == Enum.UserInputType.Touch then
+        draggingSlider = false
+    end
+end)
+
+-- GUI Toggle
+openBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        frame.Visible = not frame.Visible
+        openBtn.Text = frame.Visible and "Close LEFTAC" or "Open LEFTAC"
+    end
+end)
+
+-- Auto Click Function
+local function autoClick()
+    print('test running', running)
+    while running do
+        local centerX = crosshair.AbsolutePosition.X + (crosshair.AbsoluteSize.X / 2)
+        local centerY = crosshair.AbsolutePosition.Y + (crosshair.AbsoluteSize.Y / 2)
+        vim:SendTouchEvent(1, 0, centerX, centerY)
+        vim:SendTouchEvent(1, 2, centerX, centerY)
+        task.wait(1 / cps)
+    end
+end
+
+-- Toggle Click
+toggle.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        running = not running
+        toggle.Text = running and "Auto ON" or "Auto OFF"
+        toggle.BackgroundColor3 = running and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+        if running then
+            task.spawn(autoClick)
+        end
+    end
+end)
