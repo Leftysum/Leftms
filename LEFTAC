@@ -1,16 +1,16 @@
-local uis = game:GetService("UserInputService")
 local vim = game:GetService("VirtualInputManager")
 local player = game.Players.LocalPlayer
 
-local running, cps = false, 12
-local draggingSlider, draggingCrosshair = false, false
+local running = false
+local cps = 38
 
+-- GUI Setup
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 gui.Name = "LEFTAC"
 gui.ResetOnSpawn = false
 
 local gui2 = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui2.Name = "LEFTAC"
+gui2.Name = "LEFTAC_2"
 gui2.ResetOnSpawn = false
 
 local frame = Instance.new("Frame", gui)
@@ -56,7 +56,7 @@ local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 6)
 corner.Parent = openBtn
 
--- Crosshair
+-- Crosshair GUI
 local crosshair = Instance.new("Frame", gui2)
 crosshair.Size = UDim2.new(0, 15, 0, 15)
 crosshair.Position = UDim2.new(0.5, -10, 0.5, -10)
@@ -64,8 +64,9 @@ crosshair.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 crosshair.BorderSizePixel = 0
 crosshair.BackgroundTransparency = 0.3
 crosshair.Active = true
+crosshair.Draggable = true
 
-
+-- Open/Close Menu
 openBtn.InputBegan:Connect(function(input)
 	if input.UserInputType == Enum.UserInputType.Touch then
 		frame.Visible = not frame.Visible
@@ -73,12 +74,13 @@ openBtn.InputBegan:Connect(function(input)
 	end
 end)
 
+-- Pure AutoClicker (No Kill Aura Logic)
 local function autoClick()
 	while running do
 		local x = crosshair.AbsolutePosition.X + (crosshair.AbsoluteSize.X / 2)
 		local y = crosshair.AbsolutePosition.Y + (crosshair.AbsoluteSize.Y / 2)
-		vim:SendTouchEvent(1, 0, x, y)
-		vim:SendTouchEvent(1, 2, x, y)
+		vim:SendTouchEvent(1, 0, x, y) -- Touch begin
+		vim:SendTouchEvent(1, 2, x, y) -- Touch end
 		task.wait(1 / cps)
 	end
 end
