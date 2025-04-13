@@ -1,8 +1,7 @@
-local uis = game:GetService("UserInputService")
 local vim = game:GetService("VirtualInputManager")
 local player = game.Players.LocalPlayer
 
-local running, cps = false, 12
+local running, cps = false, 38
 local draggingSlider, draggingCrosshair = false, false
 
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
@@ -10,7 +9,7 @@ gui.Name = "LEFTAC"
 gui.ResetOnSpawn = false
 
 local gui2 = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui2.Name = "LEFTAC"
+gui2.Name = "LEFTAC_2"
 gui2.ResetOnSpawn = false
 
 local frame = Instance.new("Frame", gui)
@@ -22,6 +21,8 @@ frame.BorderSizePixel = 0
 frame.Visible = false
 frame.Active = true
 frame.Draggable = true
+frame.Modal = false
+frame.Selectable = false
 
 local toggle = Instance.new("TextButton", frame)
 toggle.Size = UDim2.new(0, 100, 0, 30)
@@ -31,6 +32,8 @@ toggle.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
 toggle.TextColor3 = Color3.new(1, 1, 1)
 toggle.Font = Enum.Font.SourceSansBold
 toggle.TextSize = 14
+toggle.Modal = false
+toggle.AutoButtonColor = true
 
 local cpsLabel = Instance.new("TextLabel", frame)
 cpsLabel.Size = UDim2.new(0, 100, 0, 20)
@@ -51,6 +54,7 @@ openBtn.TextColor3 = Color3.new(1, 1, 1)
 openBtn.Font = Enum.Font.SourceSansSemibold
 openBtn.TextSize = 13
 openBtn.AutoButtonColor = true
+openBtn.Modal = false
 
 local corner = Instance.new("UICorner")
 corner.CornerRadius = UDim.new(0, 6)
@@ -63,31 +67,35 @@ crosshair.Position = UDim2.new(0.5, -10, 0.5, -10)
 crosshair.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
 crosshair.BorderSizePixel = 0
 crosshair.BackgroundTransparency = 0.3
-crosshair.Active = false -- FIX: Allows Android screen movement
+crosshair.Active = true
+crosshair.Modal = false
+crosshair.Selectable = false
 
+-- Open/Close GUI toggle
 openBtn.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch then
-        frame.Visible = not frame.Visible
-        openBtn.Text = frame.Visible and "Close LEFTAC" or "Open LEFTAC"
-    end
+	if input.UserInputType == Enum.UserInputType.Touch then
+		frame.Visible = not frame.Visible
+		openBtn.Text = frame.Visible and "Close LEFTAC" or "Open LEFTAC"
+	end
 end)
 
+-- Autoclicking loop
 local function autoClick()
-    while running do
-        local x = crosshair.AbsolutePosition.X + (crosshair.AbsoluteSize.X / 2)
-        local y = crosshair.AbsolutePosition.Y + (crosshair.AbsoluteSize.Y / 2)
-        vim:SendTouchEvent(1, 0, x, y)
-        vim:SendTouchEvent(1, 2, x, y)
-        task.wait(1 / cps)
-    end
+	while running do
+		local x = crosshair.AbsolutePosition.X + (crosshair.AbsoluteSize.X / 2)
+		local y = crosshair.AbsolutePosition.Y + (crosshair.AbsoluteSize.Y / 2)
+		vim:SendTouchEvent(1, 0, x, y) -- begin
+		vim:SendTouchEvent(1, 2, x, y) -- end
+		task.wait(1 / cps)
+	end
 end
 
--- Toggle Click
+-- Toggle start/stop
 toggle.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch then
-        running = not running
-        toggle.Text = running and "Auto ON" or "Auto OFF"
-        toggle.BackgroundColor3 = running and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-        if running then task.spawn(autoClick) end
-    end
+	if input.UserInputType == Enum.UserInputType.Touch then
+		running = not running
+		toggle.Text = running and "Auto ON" or "Auto OFF"
+		toggle.BackgroundColor3 = running and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+		if running then task.spawn(autoClick) end
+	end
 end)
