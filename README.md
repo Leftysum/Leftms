@@ -6,4 +6,4 @@ loadstring(game:HttpGet('https://raw.githubusercontent.com/Leftysum/Leftms/refs/
 loadstring(game:HttpGet('https://raw.githubusercontent.com/Leftysum/Leftms/refs/heads/main/android%20leftac', true))()
 ----------------------------
 android script ^^
-`---------------------------’
+---------------------------
