@@ -3,7 +3,7 @@
 
 - -> Add me on discord if you wanna talk **leftpapi on discord**
 
-[![Gist Card](https://github-readme-stats.vercel.app/api/gist?id=bbfce31e0217a3689c8d961a356cb10d)](https://gist.github.com/Leftysum/bbfce31e0217a3689c8d961a356cb10d/)
+
 
 # Left's Mobile Auto Clicker
 the loadstring under me is ios
