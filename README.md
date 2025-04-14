@@ -4,8 +4,6 @@
 - -> Add me on discord if you wanna talk **leftpapi on discord**
 
 
-<h3 align="left">Language:</h3>
-<p align="left"> <a href="https://www.python.org" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/lua/lua-original.svg" alt="lua" width="40" height="40"/> </a> </p>
 
 [![Anurag's GitHub stats](https://github-readme-stats.vercel.app/api?username=Leftysum)](https://github.com/Leftysum/github-readme-stats)
 
