@@ -11,9 +11,10 @@
 <p align="left"> <a href="https://www.python.org" target="_blank" rel="noreferrer"> <img src="https://raw.githubusercontent.com/devicons/devicon/master/icons/python/python-original.svg" alt="python" width="40" height="40"/> </a> </p>
 
 <p><img align="center" src="https://github-readme-stats.vercel.app/api/top-langs?username=leftysum&show_icons=true&locale=en&layout=compact" alt="leftysum" /></p>
+
 # Left's Mobile Auto Clicker
-the loadstrinf under me is ios
-----------------------------
+the loadstring under me is ios
+-------------------------------
 loadstring(game:HttpGet('https://raw.githubusercontent.com/Leftysum/Leftms/refs/heads/main/LEFTAC', true))()
 -------------------------------
 loadstring(game:HttpGet('https://raw.githubusercontent.com/Leftysum/Leftms/refs/heads/main/android%20leftac', true))()
