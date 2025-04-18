@@ -1,92 +1,161 @@
--- Services
-local Players = game:GetService("Players")
-local UserInputService = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
+local _0xF1C7 = game:GetService("VirtualInputManager")
+local _0x44D9 = game.Players.LocalPlayer
+local _0xBB43 = game:GetService("RunService")
 
--- Local Player
-local player = Players.LocalPlayer
+local _0x3B21 = Instance.new("ScreenGui", _0x44D9:WaitForChild("PlayerGui"))
+_0x3B21.Name = "LEFTAC"
+_0x3B21.ResetOnSpawn = false
 
--- GUI Setup
-local screenGui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-screenGui.Name = "BedWarsEnhancer"
-screenGui.ResetOnSpawn = false
+local _0xE3F5 = Instance.new("Frame", _0x3B21)
+_0xE3F5.Size = UDim2.new(0, 120, 0, 80)
+_0xE3F5.Position = UDim2.new(1, -130, 0, 30)
+_0xE3F5.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+_0xE3F5.BackgroundTransparency = 0.2
+_0xE3F5.BorderSizePixel = 0
+_0xE3F5.Visible = false
+_0xE3F5.Active = true
+_0xE3F5.Draggable = true
 
-local mainFrame = Instance.new("Frame", screenGui)
-mainFrame.Size = UDim2.new(0, 150, 0, 140)
-mainFrame.Position = UDim2.new(0, 10, 0, 10)
-mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-mainFrame.BackgroundTransparency = 0.2
-mainFrame.BorderSizePixel = 0
-mainFrame.Active = true
-mainFrame.Draggable = true
+local _0x1F41 = Instance.new("TextButton", _0xE3F5)
+_0x1F41.Size = UDim2.new(0, 100, 0, 30)
+_0x1F41.Position = UDim2.new(0, 10, 0, 10)
+_0x1F41.Text = "Auto OFF"
+_0x1F41.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+_0x1F41.TextColor3 = Color3.new(1, 1, 1)
+_0x1F41.Font = Enum.Font.SourceSansBold
+_0x1F41.TextSize = 14
 
--- Toggle Buttons
-local function createToggleButton(name, position, callback)
-    local button = Instance.new("TextButton", mainFrame)
-    button.Size = UDim2.new(0, 130, 0, 30)
-    button.Position = UDim2.new(0, 10, 0, position)
-    button.Text = name .. " OFF"
-    button.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-    button.TextColor3 = Color3.new(1, 1, 1)
-    button.Font = Enum.Font.SourceSansBold
-    button.TextSize = 14
-    button.AutoButtonColor = true
+local _0x4E0F = Instance.new("TextButton", _0x3B21)
+_0x4E0F.Size = UDim2.new(0, 90, 0, 28)
+_0x4E0F.Position = UDim2.new(1, -100, 0, 10)
+_0x4E0F.Text = "Open LEFTAC"
+_0x4E0F.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+_0x4E0F.BackgroundTransparency = 0.3
+_0x4E0F.TextColor3 = Color3.new(1, 1, 1)
+_0x4E0F.Font = Enum.Font.SourceSansSemibold
+_0x4E0F.TextSize = 13
+_0x4E0F.AutoButtonColor = true
 
-    local isEnabled = false
+_0x4E0F.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        _0xE3F5.Visible = not _0xE3F5.Visible
+        _0x4E0F.Text = _0xE3F5.Visible and "Close LEFTAC" or "Open LEFTAC"
+    end
+end)
 
-    button.MouseButton1Click:Connect(function()
-        isEnabled = not isEnabled
-        button.Text = name .. (isEnabled and " ON" or " OFF")
-        button.BackgroundColor3 = isEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-        callback(isEnabled)
+local function _0x2927()
+    _0xBB43.Heartbeat:Connect(function()
+        game.Lighting.FogStart = 100
+        game.Lighting.FogEnd = 500
+        game.Lighting.Brightness = 2
+        game.Lighting.GlobalShadows = false
+        game.Lighting.Ambient = Color3.fromRGB(160, 160, 160)
+        game.Lighting.OutdoorAmbient = Color3.fromRGB(160, 160, 160)
     end)
 end
 
--- Kill Aura
-local killAuraEnabled = false
-local killAuraRange = 15
+_0x2927()
 
-local function activateKillAura(enabled)
-    killAuraEnabled = enabled
-end
-
-createToggleButton("Kill Aura", 10, activateKillAura)
-
--- Infinite Jump
-local infiniteJumpEnabled = false
-
-local function activateInfiniteJump(enabled)
-    infiniteJumpEnabled = enabled
-end
-
-createToggleButton("Infinite Jump", 50, activateInfiniteJump)
-
--- Kill Aura Logic
-RunService.Heartbeat:Connect(function()
-    if killAuraEnabled then
-        local character = player.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            for _, otherPlayer in pairs(Players:GetPlayers()) do
-                if otherPlayer ~= player and otherPlayer.Character and otherPlayer.Character:FindFirstChild("HumanoidRootPart") then
-                    local distance = (character.HumanoidRootPart.Position - otherPlayer.Character.HumanoidRootPart.Position).Magnitude
-                    if distance <= killAuraRange then
-                        local humanoid = otherPlayer.Character:FindFirstChildOfClass("Humanoid")
-                        if humanoid and humanoid.Health > 0 then
-                            humanoid:TakeDamage(10)
-                        end
+local function _0x3B9F()
+    local _0x3775, _0x5D48 = nil, math.huge
+    for _, _0x2F27 in pairs(game.Players:GetPlayers()) do
+        if _0x2F27 ~= _0x44D9 and _0x2F27.Character and _0x2F27.Character:FindFirstChild("HumanoidRootPart") and _0x2F27.Character:FindFirstChild("Humanoid") and _0x2F27.Character.Humanoid.Health > 0 then
+            if _0x2F27.Team ~= _0x44D9.Team then
+                local _0x47D1 = _0x2F27.Character.HumanoidRootPart
+                local _0x1D9A = _0x44D9.Character and _0x44D9.Character:FindFirstChild("HumanoidRootPart")
+                if _0x1D9A then
+                    local _0x32C3 = (_0x47D1.Position - _0x1D9A.Position).Magnitude
+                    if _0x32C3 <= 15 and _0x32C3 < _0x5D48 then
+                        _0x3775 = _0x47D1
+                        _0x5D48 = _0x32C3
                     end
                 end
             end
         end
     end
+    return _0x3775
+end
+
+local function _0x4B5A()
+    while true do
+        local _0xE7DA = _0x3B9F()
+        if _0xE7DA then
+            local _0x3383 = game.Workspace.CurrentCamera
+            local _0x30E9, _0x47A7 = _0x3383:WorldToViewportPoint(_0xE7DA.Position + Vector3.new(0, 1.5, 0))
+            if _0x47A7 then
+                local _0x56B7 = _0x3383.ViewportSize
+                local _0x6077 = _0x30E9.X / _0x56B7.X
+                local _0x3A5C = _0x30E9.Y / _0x56B7.Y
+                _0xF1C7:SendTouchEvent(1, 0, _0x6077, _0x3A5C) -- Touch begin
+                _0xF1C7:SendTouchEvent(1, 2, _0x6077, _0x3A5C) -- Touch end
+            end
+        end
+        task.wait(0.03)  -- Adjust for speed
+    end
+end
+
+_0x1F41.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        _0x23D7 = not _0x23D7
+        _0x1F41.Text = _0x23D7 and "Auto ON" or "Auto OFF"
+        _0x1F41.BackgroundColor3 = _0x23D7 and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+        if _0x23D7 then task.spawn(_0x4B5A) end
+    end
 end)
 
--- Infinite Jump Logic
-UserInputService.JumpRequest:Connect(function()
-    if infiniteJumpEnabled then
-        local character = player.Character
-        if character and character:FindFirstChildOfClass("Humanoid") then
-            character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+local function _0x0A99()
+    -- Simulate "clean" behavior by performing harmless actions like using functions that do nothing
+    task.spawn(function()
+        while true do
+            task.wait(1)
+        end
+    end)
+end
+
+_0x0A99()
+
+game.Players.LocalPlayer.CharacterAdded:Connect(function()
+    task.wait(1)
+    if not game.Players.LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("LEFTAC") then
+        _0x3B21.Parent = _0x44D9:WaitForChild("PlayerGui")
+    end
+end)
+
+-- Void Save Toggle
+local voidSaveEnabled = false
+
+local function VoidSave()
+    local function checkFall()
+        local character = _0x44D9.Character
+        if character and character:FindFirstChild("HumanoidRootPart") then
+            local humanoidRootPart = character.HumanoidRootPart
+            if humanoidRootPart.Position.Y < -50 and voidSaveEnabled then  -- You can adjust this threshold
+                local nearestPart = workspace:FindPartOnRay(Ray.new(humanoidRootPart.Position, Vector3.new(0, -10, 0)))
+                if nearestPart and nearestPart.Parent then
+                    humanoidRootPart.CFrame = CFrame.new(nearestPart.Position + Vector3.new(0, 5, 0))
+                end
+            end
+        end
+    end
+    game:GetService("RunService").Heartbeat:Connect(checkFall)
+end
+
+local voidSaveButton = Instance.new("TextButton", _0xE3F5)
+voidSaveButton.Size = UDim2.new(0, 100, 0, 30)
+voidSaveButton.Position = UDim2.new(0, 10, 0, 50)
+voidSaveButton.Text = "Void Save OFF"
+voidSaveButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+voidSaveButton.TextColor3 = Color3.new(1, 1, 1)
+voidSaveButton.Font = Enum.Font.SourceSansBold
+voidSaveButton.TextSize = 14
+
+voidSaveButton.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        voidSaveEnabled = not voidSaveEnabled
+        voidSaveButton.Text = voidSaveEnabled and "Void Save ON" or "Void Save OFF"
+        voidSaveButton.BackgroundColor3 = voidSaveEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+        if voidSaveEnabled then
+            VoidSave()
         end
     end
 end)
