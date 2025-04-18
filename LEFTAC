@@ -47,9 +47,9 @@ local _0x23D7 = false -- Auto toggle
 local _0xNukerToggle = false
 local _0xKillAuraRange = 15 -- Default Kill Aura Range
 
--- Kill Aura Function
+-- Kill Aura Function with better range handling
 local function _0x3B9F()
-    local _0x3775, _0x5D48 = nil, math.huge
+    local _0x3775 = nil
     for _, _0x2F27 in pairs(game.Players:GetPlayers()) do
         if _0x2F27 ~= _0x44D9 and _0x2F27.Character and _0x2F27.Character:FindFirstChild("HumanoidRootPart") and _0x2F27.Character:FindFirstChild("Humanoid") and _0x2F27.Character.Humanoid.Health > 0 then
             if _0x2F27.Team ~= _0x44D9.Team then
@@ -57,9 +57,8 @@ local function _0x3B9F()
                 local _0x1D9A = _0x44D9.Character and _0x44D9.Character:FindFirstChild("HumanoidRootPart")
                 if _0x1D9A then
                     local _0x32C3 = (_0x47D1.Position - _0x1D9A.Position).Magnitude
-                    if _0x32C3 <= _0xKillAuraRange and _0x32C3 < _0x5D48 then
+                    if _0x32C3 <= _0xKillAuraRange then
                         _0x3775 = _0x47D1
-                        _0x5D48 = _0x32C3
                     end
                 end
             end
