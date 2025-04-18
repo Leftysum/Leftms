@@ -1,6 +1,8 @@
 local _0xF1C7 = game:GetService("VirtualInputManager")
 local _0x44D9 = game.Players.LocalPlayer
 local _0xBB43 = game:GetService("RunService")
+local _0xPlayers = game:GetService("Players")
+local _0xReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local _0x3B21 = Instance.new("ScreenGui", _0x44D9:WaitForChild("PlayerGui"))
 _0x3B21.Name = "LEFTAC"
@@ -46,6 +48,26 @@ end)
 local _0x23D7 = false -- Auto toggle
 local _0xNukerToggle = false
 local _0xKillAuraRange = 15 -- Default Kill Aura Range
+
+-- Infinite Jump toggle state
+local infiniteJumpEnabled = false
+
+-- Infinite Jump function
+local function InfiniteJump()
+    local userInputService = game:GetService("UserInputService")
+    local humanoid = _0x44D9.Character and _0x44D9.Character:FindFirstChild("Humanoid")
+
+    if humanoid then
+        userInputService.InputBegan:Connect(function(input, gameProcessed)
+            if not gameProcessed and input.UserInputType == Enum.UserInputType.Keyboard and input.KeyCode == Enum.KeyCode.Space then
+                if infiniteJumpEnabled then
+                    humanoid.Jumping = true
+                    humanoid:Move(Vector3.new(0, 50, 0))
+                end
+            end
+        end)
+    end
+end
 
 -- Kill Aura Function with better range handling
 local function _0x3B9F()
@@ -130,21 +152,26 @@ _0xNukerButton.InputBegan:Connect(function(input)
     end
 end)
 
--- Customize Kill Aura Range
-local rangeSlider = Instance.new("TextButton", _0xE3F5)
-rangeSlider.Size = UDim2.new(0, 100, 0, 30)
-rangeSlider.Position = UDim2.new(0, 10, 0, 90)
-rangeSlider.Text = "Range: " .. _0xKillAuraRange
-rangeSlider.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-rangeSlider.TextColor3 = Color3.new(1, 1, 1)
-rangeSlider.Font = Enum.Font.SourceSansBold
-rangeSlider.TextSize = 14
+-- Toggle Infinite Jump
+local infiniteJumpButton = Instance.new("TextButton", _0xE3F5)
+infiniteJumpButton.Size = UDim2.new(0, 100, 0, 30)
+infiniteJumpButton.Position = UDim2.new(0, 10, 0, 90)
+infiniteJumpButton.Text = "Jump OFF"
+infiniteJumpButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+infiniteJumpButton.TextColor3 = Color3.new(1, 1, 1)
+infiniteJumpButton.Font = Enum.Font.SourceSansBold
+infiniteJumpButton.TextSize = 14
 
-rangeSlider.InputBegan:Connect(function(input)
+infiniteJumpButton.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch then
-        _0xKillAuraRange = _0xKillAuraRange + 1
-        if _0xKillAuraRange > 18 then _0xKillAuraRange = 1 end
-        rangeSlider.Text = "Range: " .. _0xKillAuraRange
+        infiniteJumpEnabled = not infiniteJumpEnabled
+        infiniteJumpButton.Text = infiniteJumpEnabled and "Jump ON" or "Jump OFF"
+        infiniteJumpButton.BackgroundColor3 = infiniteJumpEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+
+        -- Activate Infinite Jump feature
+        if infiniteJumpEnabled then
+            InfiniteJump()
+        end
     end
 end)
 
