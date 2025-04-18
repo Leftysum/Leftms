@@ -1,120 +1,125 @@
--- Services
 local VIM = game:GetService("VirtualInputManager")
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
 -- GUI Setup
-local Gui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
-Gui.Name = "LEFTAC"
-Gui.ResetOnSpawn = false
+local gui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+gui.Name = "LEFTAC"
+gui.ResetOnSpawn = false
 
-local Frame = Instance.new("Frame", Gui)
-Frame.Size = UDim2.new(0, 150, 0, 160)
-Frame.Position = UDim2.new(1, -160, 0, 30)
-Frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-Frame.BackgroundTransparency = 0.2
-Frame.BorderSizePixel = 0
-Frame.Visible = false
-Frame.Active = true
-Frame.Draggable = true
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 150, 0, 160)
+frame.Position = UDim2.new(1, -160, 0, 50)
+frame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+frame.BackgroundTransparency = 0.2
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
+frame.Visible = false
 
-local ToggleAura = Instance.new("TextButton", Frame)
-ToggleAura.Size = UDim2.new(0, 130, 0, 30)
-ToggleAura.Position = UDim2.new(0, 10, 0, 10)
-ToggleAura.Text = "KillAura OFF"
-ToggleAura.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-ToggleAura.TextColor3 = Color3.new(1, 1, 1)
-ToggleAura.Font = Enum.Font.SourceSansBold
-ToggleAura.TextSize = 14
+local openBtn = Instance.new("TextButton", gui)
+openBtn.Size = UDim2.new(0, 90, 0, 28)
+openBtn.Position = UDim2.new(1, -100, 0, 10)
+openBtn.Text = "Open LEFTAC"
+openBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+openBtn.TextColor3 = Color3.new(1, 1, 1)
+openBtn.Font = Enum.Font.SourceSansSemibold
+openBtn.TextSize = 13
 
-local ToggleNuker = Instance.new("TextButton", Frame)
-ToggleNuker.Size = UDim2.new(0, 130, 0, 30)
-ToggleNuker.Position = UDim2.new(0, 10, 0, 50)
-ToggleNuker.Text = "BedNuker OFF"
-ToggleNuker.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-ToggleNuker.TextColor3 = Color3.new(1, 1, 1)
-ToggleNuker.Font = Enum.Font.SourceSansBold
-ToggleNuker.TextSize = 14
-
-local RangeLabel = Instance.new("TextLabel", Frame)
-RangeLabel.Size = UDim2.new(0, 100, 0, 20)
-RangeLabel.Position = UDim2.new(0, 25, 0, 90)
-RangeLabel.BackgroundTransparency = 1
-RangeLabel.Text = "Range: 15"
-RangeLabel.TextColor3 = Color3.new(1, 1, 1)
-RangeLabel.Font = Enum.Font.SourceSans
-RangeLabel.TextSize = 14
-
-local IncreaseRange = Instance.new("TextButton", Frame)
-IncreaseRange.Size = UDim2.new(0, 20, 0, 20)
-IncreaseRange.Position = UDim2.new(0, 120, 0, 90)
-IncreaseRange.Text = "+"
-IncreaseRange.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-IncreaseRange.TextColor3 = Color3.new(1, 1, 1)
-
-local DecreaseRange = Instance.new("TextButton", Frame)
-DecreaseRange.Size = UDim2.new(0, 20, 0, 20)
-DecreaseRange.Position = UDim2.new(0, 0, 0, 90)
-DecreaseRange.Text = "-"
-DecreaseRange.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-DecreaseRange.TextColor3 = Color3.new(1, 1, 1)
-
-local OpenButton = Instance.new("TextButton", Gui)
-OpenButton.Size = UDim2.new(0, 90, 0, 28)
-OpenButton.Position = UDim2.new(1, -100, 0, 10)
-OpenButton.Text = "Open LEFTAC"
-OpenButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-OpenButton.BackgroundTransparency = 0.3
-OpenButton.TextColor3 = Color3.new(1, 1, 1)
-OpenButton.Font = Enum.Font.SourceSansSemibold
-OpenButton.TextSize = 13
-OpenButton.AutoButtonColor = true
-
--- GUI Toggle
-OpenButton.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch then
-        Frame.Visible = not Frame.Visible
-        OpenButton.Text = Frame.Visible and "Close LEFTAC" or "Open LEFTAC"
-    end
+openBtn.MouseButton1Click:Connect(function()
+    frame.Visible = not frame.Visible
+    openBtn.Text = frame.Visible and "Close LEFTAC" or "Open LEFTAC"
 end)
 
--- Features
-local auraOn = false
-local nukerOn = false
-local auraRange = 15
+-- Kill Aura Toggle
+local toggleKA = Instance.new("TextButton", frame)
+toggleKA.Size = UDim2.new(0, 120, 0, 30)
+toggleKA.Position = UDim2.new(0, 15, 0, 10)
+toggleKA.Text = "KillAura OFF"
+toggleKA.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+toggleKA.TextColor3 = Color3.new(1, 1, 1)
+toggleKA.Font = Enum.Font.SourceSansBold
+toggleKA.TextSize = 14
 
-IncreaseRange.MouseButton1Click:Connect(function()
-    auraRange = math.clamp(auraRange + 1, 1, 18)
-    RangeLabel.Text = "Range: " .. auraRange
+-- KA Range Spin Wheel
+local rangeLabel = Instance.new("TextLabel", frame)
+rangeLabel.Position = UDim2.new(0, 15, 0, 50)
+rangeLabel.Size = UDim2.new(0, 120, 0, 20)
+rangeLabel.Text = "Range: 15"
+rangeLabel.TextColor3 = Color3.new(1, 1, 1)
+rangeLabel.BackgroundTransparency = 1
+rangeLabel.Font = Enum.Font.SourceSans
+rangeLabel.TextSize = 14
+
+local minusBtn = Instance.new("TextButton", frame)
+minusBtn.Position = UDim2.new(0, 15, 0, 75)
+minusBtn.Size = UDim2.new(0, 25, 0, 20)
+minusBtn.Text = "-"
+minusBtn.Font = Enum.Font.SourceSansBold
+minusBtn.TextSize = 18
+minusBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+minusBtn.TextColor3 = Color3.new(1, 1, 1)
+
+local plusBtn = Instance.new("TextButton", frame)
+plusBtn.Position = UDim2.new(0, 110, 0, 75)
+plusBtn.Size = UDim2.new(0, 25, 0, 20)
+plusBtn.Text = "+"
+plusBtn.Font = Enum.Font.SourceSansBold
+plusBtn.TextSize = 18
+plusBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+plusBtn.TextColor3 = Color3.new(1, 1, 1)
+
+local range = 15
+
+minusBtn.MouseButton1Click:Connect(function()
+    range = math.max(1, range - 1)
+    rangeLabel.Text = "Range: " .. range
 end)
 
-DecreaseRange.MouseButton1Click:Connect(function()
-    auraRange = math.clamp(auraRange - 1, 1, 18)
-    RangeLabel.Text = "Range: " .. auraRange
+plusBtn.MouseButton1Click:Connect(function()
+    range = math.min(18, range + 1)
+    rangeLabel.Text = "Range: " .. range
 end)
 
-ToggleAura.MouseButton1Click:Connect(function()
-    auraOn = not auraOn
-    ToggleAura.Text = auraOn and "KillAura ON" or "KillAura OFF"
-    ToggleAura.BackgroundColor3 = auraOn and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+-- Nuker Toggle
+local nukerToggle = Instance.new("TextButton", frame)
+nukerToggle.Position = UDim2.new(0, 15, 0, 105)
+nukerToggle.Size = UDim2.new(0, 120, 0, 30)
+nukerToggle.Text = "Bed Nuker OFF"
+nukerToggle.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+nukerToggle.TextColor3 = Color3.new(1, 1, 1)
+nukerToggle.Font = Enum.Font.SourceSansBold
+nukerToggle.TextSize = 14
+
+-- Kill Aura Logic
+local killAuraOn = false
+toggleKA.MouseButton1Click:Connect(function()
+    killAuraOn = not killAuraOn
+    toggleKA.Text = killAuraOn and "KillAura ON" or "KillAura OFF"
+    toggleKA.BackgroundColor3 = killAuraOn and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
 end)
 
-ToggleNuker.MouseButton1Click:Connect(function()
-    nukerOn = not nukerOn
-    ToggleNuker.Text = nukerOn and "BedNuker ON" or "BedNuker OFF"
-    ToggleNuker.BackgroundColor3 = nukerOn and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-end)
-
--- Helper Functions
-local function getClosestEnemy()
-    local closest, dist = nil, auraRange
-    for _, p in pairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer and p.Character and p.Character:FindFirstChild("HumanoidRootPart") and p.Character:FindFirstChild("Humanoid") and p.Character.Humanoid.Health > 0 then
-            if p.Team ~= LocalPlayer.Team then
-                local mag = (LocalPlayer.Character.HumanoidRootPart.Position - p.Character.HumanoidRootPart.Position).Magnitude
+local function getClosestTarget()
+    local closest, dist = nil, range
+    for _, player in ipairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("HumanoidRootPart") and player.Character:FindFirstChild("Humanoid") then
+            if player.Team ~= LocalPlayer.Team and player.Character.Humanoid.Health > 0 then
+                local mag = (player.Character.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
                 if mag <= dist then
-                    closest = p.Character.HumanoidRootPart
+                    closest = player.Character.HumanoidRootPart
+                    dist = mag
+                end
+            end
+        end
+    end
+    -- Check NPCs
+    for _, npc in ipairs(workspace:GetDescendants()) do
+        if npc:IsA("Model") and npc:FindFirstChild("HumanoidRootPart") and npc:FindFirstChild("Humanoid") then
+            if npc:FindFirstChild("NameDisplayDistance") == nil then -- skip players
+                local mag = (npc.HumanoidRootPart.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
+                if mag <= dist and npc.Humanoid.Health > 0 then
+                    closest = npc.HumanoidRootPart
                     dist = mag
                 end
             end
@@ -123,58 +128,70 @@ local function getClosestEnemy()
     return closest
 end
 
-local function getClosestBed()
-    local closest, dist = nil, auraRange
-    for _, obj in pairs(workspace:GetDescendants()) do
-        if obj.Name == "bed" and obj:IsA("Part") then
-            local mag = (LocalPlayer.Character.HumanoidRootPart.Position - obj.Position).Magnitude
-            if mag <= dist then
-                closest = obj
-                dist = mag
-            end
-        end
-    end
-    return closest
-end
-
--- Kill Aura Logic
 task.spawn(function()
     while true do
-        if auraOn and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local target = getClosestEnemy()
+        if killAuraOn then
+            local target = getClosestTarget()
             if target then
                 local cam = workspace.CurrentCamera
                 local screenPos, onScreen = cam:WorldToViewportPoint(target.Position + Vector3.new(0, 1.5, 0))
                 if onScreen then
-                    local vp = cam.ViewportSize
-                    local x, y = screenPos.X / vp.X, screenPos.Y / vp.Y
+                    local x = screenPos.X / cam.ViewportSize.X
+                    local y = screenPos.Y / cam.ViewportSize.Y
                     VIM:SendTouchEvent(1, 0, x, y)
                     VIM:SendTouchEvent(1, 2, x, y)
                 end
             end
         end
-        task.wait(0.03)
+        task.wait(0.035)
     end
 end)
 
 -- Bed Nuker Logic
-task.spawn(function()
-    while true do
-        if nukerOn and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
-            local bed = getClosestBed()
-            if bed then
-                local args = {
-                    [1] = {
-                        blockPosition = bed.Position,
-                        blockType = "bed",
-                        cameraCFrame = workspace.CurrentCamera.CFrame,
-                        playerPosition = LocalPlayer.Character.HumanoidRootPart.Position
-                    }
-                }
-                -- Firing the bed break remote (change if needed)
-                game:GetService("ReplicatedStorage").rbxts_include.node_modules:FindFirstChild("@rbxts"):FindFirstChild("net").out._NetManaged.BreakBlock:FireServer(unpack(args))
+local nukerOn = false
+nukerToggle.MouseButton1Click:Connect(function()
+    nukerOn = not nukerOn
+    nukerToggle.Text = nukerOn and "Bed Nuker ON" or "Bed Nuker OFF"
+    nukerToggle.BackgroundColor3 = nukerOn and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+end)
+
+local function getRemote()
+    for _, v in pairs(getgc(true)) do
+        if typeof(v) == "table" and rawget(v, "BreakBlock") then
+            return v
+        end
+    end
+end
+
+local function getClosestBed()
+    local closestBed, minDist = nil, 15
+    for _, obj in ipairs(workspace:GetDescendants()) do
+        if obj:IsA("Model") and obj.Name:lower():find("bed") and obj:FindFirstChild("Covers") then
+            local root = obj:FindFirstChild("Covers")
+            if root and (root.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude <= minDist then
+                closestBed = obj
+                minDist = (root.Position - LocalPlayer.Character.HumanoidRootPart.Position).Magnitude
             end
         end
-        task.wait(0.3)
+    end
+    return closestBed
+end
+
+task.spawn(function()
+    local remote = getRemote()
+    while true do
+        if nukerOn and remote then
+            local bed = getClosestBed()
+            if bed then
+                local cover = bed:FindFirstChild("Covers")
+                if cover then
+                    remote:BreakBlock({
+                        blockPosition = cover.Position,
+                        blockType = "bed"
+                    })
+                end
+            end
+        end
+        task.wait(0.25)
     end
 end)
