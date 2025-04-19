@@ -1,123 +1,272 @@
--- Variables and existing code
-local Players = game:GetService("Players")
-local lp = Players.LocalPlayer
+local Players, RunService, Lighting = game:GetService("Players"), game:GetService("RunService"), game:GetService("Lighting")
 local VirtualInput = game:GetService("VirtualInputManager")
+local UserInputService = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local lp = Players.LocalPlayer
 
-local killAuraOn = false
-local auraRange = 15  -- Default range
+-- GUI
+local gui = Instance.new("ScreenGui", lp:WaitForChild("PlayerGui"))
+gui.Name = "BedWarsScript"
+gui.ResetOnSpawn = false
 
--- Create the main GUI elements
-local gui = Instance.new("ScreenGui")
-gui.Name = "LEFTAC"
-gui.Parent = game.Players.LocalPlayer:WaitForChild("PlayerGui")
+local openButton = Instance.new("TextButton", gui)
+openButton.Size = UDim2.new(0, 100, 0, 25)
+openButton.Position = UDim2.new(1, -105, 0, 10)
+openButton.Text = "Open LEFTAC"
+openButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+openButton.TextColor3 = Color3.new(1, 1, 1)
+openButton.Font = Enum.Font.SourceSansBold
+openButton.TextSize = 14
 
-local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 300, 0, 500)
-mainFrame.Position = UDim2.new(0, 10, 0, 10)
-mainFrame.BackgroundTransparency = 0.5
-mainFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-mainFrame.Parent = gui
+local scrollFrame = Instance.new("ScrollingFrame", gui)
+scrollFrame.Size = UDim2.new(0, 160, 0, 240)
+scrollFrame.Position = UDim2.new(1, -170, 0, 40)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 1000)
+scrollFrame.ScrollBarThickness = 5
+scrollFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+scrollFrame.BorderSizePixel = 0
+scrollFrame.Visible = false
+scrollFrame.Active = true
+scrollFrame.Draggable = true
 
-local closeButton = Instance.new("TextButton")
-closeButton.Size = UDim2.new(0, 50, 0, 30)
-closeButton.Position = UDim2.new(1, -50, 0, 0)
-closeButton.Text = "Close"
-closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-closeButton.Parent = mainFrame
-closeButton.MouseButton1Click:Connect(function()
-    gui.Enabled = false  -- Close the GUI when clicked
-end)
-
-local openButton = Instance.new("TextButton")
-openButton.Size = UDim2.new(0, 50, 0, 30)
-openButton.Position = UDim2.new(1, -50, 0, 40)
-openButton.Text = "Open"
-openButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-openButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-openButton.Parent = gui
+-- Toggle Open/Close
 openButton.MouseButton1Click:Connect(function()
-    gui.Enabled = true  -- Open the GUI when clicked
+	scrollFrame.Visible = not scrollFrame.Visible
+	openButton.Text = scrollFrame.Visible and "Close LEFTAC" or "Open LEFTAC"
 end)
 
--- Create a toggle button for Kill Aura
-local killAuraButton = Instance.new("TextButton")
-killAuraButton.Size = UDim2.new(0, 250, 0, 50)
-killAuraButton.Position = UDim2.new(0, 25, 0, 70)
-killAuraButton.Text = "Kill Aura: OFF"
-killAuraButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-killAuraButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-killAuraButton.Parent = mainFrame
+-- Helper: Create Button
+local function createButton(name, initial, callback)
+	local btn = Instance.new("TextButton", scrollFrame)
+	btn.Size = UDim2.new(1, -10, 0, 30)
+	btn.Position = UDim2.new(0, 5, 0, #scrollFrame:GetChildren() * 32)
+	btn.Text = name .. ": " .. (initial and "ON" or "OFF")
+	btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+	btn.TextColor3 = Color3.new(1, 1, 1)
+	btn.Font = Enum.Font.SourceSansBold
+	btn.TextSize = 14
+	callback(btn)
+end
 
-killAuraButton.MouseButton1Click:Connect(function()
-    killAuraOn = not killAuraOn
-    killAuraButton.Text = killAuraOn and "Kill Aura: ON" or "Kill Aura: OFF"
+-- Kill Aura Toggle
+local killAuraOn = false
+local auraRange = 15
+createButton("Kill Aura", killAuraOn, function(btn)
+	btn.MouseButton1Click:Connect(function()
+		killAuraOn = not killAuraOn
+		btn.Text = "Kill Aura: " .. (killAuraOn and "ON" or "OFF")
+	end)
 end)
 
--- Create a label to display the Aura Range
-local rangeDisplay = Instance.new("TextLabel")
-rangeDisplay.Size = UDim2.new(0, 250, 0, 50)
-rangeDisplay.Position = UDim2.new(0, 25, 0, 130)
+-- Infinite Jump Toggle
+local infJump = false
+createButton("Infinite Jump", infJump, function(btn)
+	btn.MouseButton1Click:Connect(function()
+		infJump = not infJump
+		btn.Text = "Infinite Jump: " .. (infJump and "ON" or "OFF")
+	end)
+end)
+
+-- FPS Boost
+local fpsBoost = false
+createButton("FPS Boost", fpsBoost, function(btn)
+	btn.MouseButton1Click:Connect(function()
+		fpsBoost = not fpsBoost
+		btn.Text = "FPS Boost: " .. (fpsBoost and "ON" or "OFF")
+
+		if fpsBoost then
+			Lighting.FogEnd = 1000
+			Lighting.FogStart = 0
+			Lighting.Brightness = 1
+			Lighting.GlobalShadows = false
+			Lighting.Ambient = Color3.fromRGB(100, 100, 100)
+			Lighting.OutdoorAmbient = Color3.fromRGB(100, 100, 100)
+			for _, v in pairs(Lighting:GetChildren()) do if v:IsA("Sky") then v:Destroy() end end
+			local sky = Instance.new("Sky", Lighting)
+			sky.SkyboxBk = ""; sky.SkyboxDn = ""; sky.SkyboxFt = ""
+			sky.SkyboxLf = ""; sky.SkyboxRt = ""; sky.SkyboxUp = ""
+		else
+			Lighting.FogEnd = 100000
+			Lighting.GlobalShadows = true
+			Lighting.Brightness = 2
+		end
+	end)
+end)
+
+-- Speed Boost
+local speedBoost = false
+createButton("Speed Boost", speedBoost, function(btn)
+	btn.MouseButton1Click:Connect(function()
+		speedBoost = not speedBoost
+		btn.Text = "Speed Boost: " .. (speedBoost and "ON" or "OFF")
+		local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+		if hum then
+			hum.WalkSpeed = speedBoost and 20 or 16
+		end
+	end)
+end)
+
+-- Aura Range Display
+local rangeDisplay = Instance.new("TextLabel", scrollFrame)
+rangeDisplay.Size = UDim2.new(1, -10, 0, 25)
+rangeDisplay.Position = UDim2.new(0, 5, 0, #scrollFrame:GetChildren() * 32)
 rangeDisplay.Text = "Aura Range: " .. auraRange
-rangeDisplay.TextColor3 = Color3.fromRGB(255, 255, 255)
+rangeDisplay.TextColor3 = Color3.new(1, 1, 1)
 rangeDisplay.BackgroundTransparency = 1
 rangeDisplay.Font = Enum.Font.SourceSansBold
 rangeDisplay.TextSize = 14
-rangeDisplay.Parent = mainFrame
 
--- Create buttons to adjust the range
-local rangePlusButton = Instance.new("TextButton")
-rangePlusButton.Size = UDim2.new(0, 100, 0, 30)
-rangePlusButton.Position = UDim2.new(0, 25, 0, 200)
-rangePlusButton.Text = "Range +"
-rangePlusButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-rangePlusButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-rangePlusButton.Parent = mainFrame
-
-local rangeMinusButton = Instance.new("TextButton")
-rangeMinusButton.Size = UDim2.new(0, 100, 0, 30)
-rangeMinusButton.Position = UDim2.new(0, 150, 0, 200)
-rangeMinusButton.Text = "Range -"
-rangeMinusButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-rangeMinusButton.BackgroundColor3 = Color3.fromRGB(100, 100, 100)
-rangeMinusButton.Parent = mainFrame
-
-rangePlusButton.MouseButton1Click:Connect(function()
-    auraRange = math.clamp(auraRange + 1, 1, 18)
-    rangeDisplay.Text = "Aura Range: " .. auraRange
+createButton("Range +", false, function(btn)
+	btn.MouseButton1Click:Connect(function()
+		auraRange = math.clamp(auraRange + 1, 1, 18)
+		rangeDisplay.Text = "Aura Range: " .. auraRange
+	end)
 end)
 
-rangeMinusButton.MouseButton1Click:Connect(function()
-    auraRange = math.clamp(auraRange - 1, 1, 18)
-    rangeDisplay.Text = "Aura Range: " .. auraRange
+createButton("Range -", false, function(btn)
+	btn.MouseButton1Click:Connect(function()
+		auraRange = math.clamp(auraRange - 1, 1, 18)
+		rangeDisplay.Text = "Aura Range: " .. auraRange
+	end)
 end)
 
--- Kill Aura Functionality
+-- Aim Assist (Smooth, Toggle)
+local aimAssist = false
+createButton("Aim Assist", aimAssist, function(btn)
+	btn.MouseButton1Click:Connect(function()
+		aimAssist = not aimAssist
+		btn.Text = "Aim Assist: " .. (aimAssist and "ON" or "OFF")
+	end)
+end)
+
+-- Infinite Jump Logic
+UserInputService.JumpRequest:Connect(function()
+	if infJump then
+		local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+		if hum then
+			hum:ChangeState(Enum.HumanoidStateType.Jumping)
+		end
+	end
+end)
+
+-- Kill Aura Logic (360 degrees)
 task.spawn(function()
-    while true do
-        if killAuraOn and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-            local hrp = lp.Character.HumanoidRootPart
-            for _, player in pairs(Players:GetPlayers()) do
-                if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-                    local target = player.Character
-                    local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
-                    if dist <= auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
-                        -- Send input to attack the target if within range
-                        local cam = workspace.CurrentCamera
-                        local screenPos, onScreen = cam:WorldToViewportPoint(target.HumanoidRootPart.Position)
-                        if onScreen then
-                            local x = screenPos.X / cam.ViewportSize.X
-                            local y = screenPos.Y / cam.ViewportSize.Y
-                            VirtualInput:SendTouchEvent(1, 0, x, y)
-                            VirtualInput:SendTouchEvent(1, 2, x, y)
-                        end
-                    end
-                end
-            end
-        end
-        task.wait(0.1)
-    end
+	while true do
+		if killAuraOn and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+			local hrp = lp.Character.HumanoidRootPart
+			for _, player in pairs(Players:GetPlayers()) do
+				if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+					local target = player.Character
+					local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
+					if dist <= auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
+						local cam = workspace.CurrentCamera
+						local screenPos, onScreen = cam:WorldToViewportPoint(target.HumanoidRootPart.Position)
+						if onScreen then
+							local x = screenPos.X / cam.ViewportSize.X
+							local y = screenPos.Y / cam.ViewportSize.Y
+							VirtualInput:SendTouchEvent(1, 0, x, y)
+							VirtualInput:SendTouchEvent(1, 2, x, y)
+						end
+					end
+				end
+			end
+		end
+		task.wait(0.1)
+	end
 end)
 
--- Ensure the GUI starts closed
-gui.Enabled = false  -- Start with the GUI closed
+-- Smooth Aim Assist Loop
+RunService.RenderStepped:Connect(function()
+	if aimAssist and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+		local hrp = lp.Character.HumanoidRootPart
+		local closest, shortest = nil, math.huge
+
+		for _, player in pairs(Players:GetPlayers()) do
+			if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				local target = player.Character
+				local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
+				if dist < auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
+					local cam = workspace.CurrentCamera
+					local screenPos, onScreen = cam:WorldToViewportPoint(target.HumanoidRootPart.Position)
+					if onScreen and dist < shortest then
+						shortest = dist
+						closest = target
+					end
+				end
+			end
+		end
+
+		if closest then
+			local cam = workspace.CurrentCamera
+			local direction = (closest.HumanoidRootPart.Position - cam.CFrame.Position).Unit
+			local smoothLook = cam.CFrame:Lerp(CFrame.lookAt(cam.CFrame.Position, cam.CFrame.Position + direction), 0.1)
+			cam.CFrame = smoothLook
+		end
+	end
+end)
+
+-- Infinite Jump Logic
+UserInputService.JumpRequest:Connect(function()
+	if infJump then
+		local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
+		if hum then
+			hum:ChangeState(Enum.HumanoidStateType.Jumping)
+		end
+	end
+end)
+
+-- Kill Aura Logic (360 degrees)
+task.spawn(function()
+	while true do
+		if killAuraOn and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+			local hrp = lp.Character.HumanoidRootPart
+			for _, player in pairs(Players:GetPlayers()) do
+				if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+					local target = player.Character
+					local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
+					if dist <= auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
+						local cam = workspace.CurrentCamera
+						local screenPos, onScreen = cam:WorldToViewportPoint(target.HumanoidRootPart.Position)
+						if onScreen then
+							local x = screenPos.X / cam.ViewportSize.X
+							local y = screenPos.Y / cam.ViewportSize.Y
+							VirtualInput:SendTouchEvent(1, 0, x, y)
+							VirtualInput:SendTouchEvent(1, 2, x, y)
+						end
+					end
+				end
+			end
+		end
+		task.wait(0.1)
+	end
+end)
+
+-- Smooth Aim Assist Loop
+RunService.RenderStepped:Connect(function()
+	if aimAssist and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+		local hrp = lp.Character.HumanoidRootPart
+		local closest, shortest = nil, math.huge
+
+		for _, player in pairs(Players:GetPlayers()) do
+			if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				local target = player.Character
+				local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
+				if dist < auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
+					local cam = workspace.CurrentCamera
+					local screenPos, onScreen = cam:WorldToViewportPoint(target.HumanoidRootPart.Position)
+					if onScreen and dist < shortest then
+						shortest = dist
+						closest = target
+					end
+				end
+			end
+		end
+
+		if closest then
+			local cam = workspace.CurrentCamera
+			local direction = (closest.HumanoidRootPart.Position - cam.CFrame.Position).Unit
+			local smoothLook = cam.CFrame:Lerp(CFrame.lookAt(cam.CFrame.Position, cam.CFrame.Position + direction), 0.1)
+			cam.CFrame = smoothLook
+		end
+	end
+end)
