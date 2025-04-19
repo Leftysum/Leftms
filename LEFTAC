@@ -13,10 +13,10 @@ mainFrame.BorderSizePixel = 0
 mainFrame.Visible = false
 mainFrame.ZIndex = 1
 
--- Create the "Open/Close LEFTAC" button
+-- Create the "Open/Close LEFTAC" button in the top-right corner
 local toggleBtn = Instance.new("TextButton")
 toggleBtn.Size = UDim2.new(0, 120, 0, 35)
-toggleBtn.Position = UDim2.new(0, 10, 0, 10)
+toggleBtn.Position = UDim2.new(1, -130, 0, 10)  -- Positioned top-right
 toggleBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 toggleBtn.Text = "Open LEFTAC"
 toggleBtn.TextColor3 = Color3.new(1, 1, 1)
@@ -50,7 +50,7 @@ local function createFeatureButton(name, onText, offText, callback)
 	return btn
 end
 
--- Kill Aura toggle (on/off button)
+-- Kill Aura toggle (on/off button) - **No changes to this part**
 local killAuraOn = false
 createFeatureButton("Kill Aura", "Kill Aura: ON", "Kill Aura: OFF", function(btn)
 	killAuraOn = not killAuraOn
