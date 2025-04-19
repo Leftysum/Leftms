@@ -1,157 +1,129 @@
-local Players, RunService, Lighting = game:GetService("Players"), game:GetService("RunService"), game:GetService("Lighting")
-local VirtualInput = game:GetService("VirtualInputManager")
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local lp = Players.LocalPlayer
+local camera = workspace.CurrentCamera
 
--- GUI
-local gui = Instance.new("ScreenGui", lp:WaitForChild("PlayerGui"))
-gui.Name = "BedWarsScript"
-gui.ResetOnSpawn = false
+-- Feature toggles
+local killAuraOn, infiniteJump, voidSave, fpsBoost, speedBoost = false, false, false, false, false
+local noSwordCooldown, noClickDelay, aimAssist = false, false, false
+local auraRange = 15
 
-local openButton = Instance.new("TextButton", gui)
-openButton.Size = UDim2.new(0, 100, 0, 25)
-openButton.Position = UDim2.new(1, -105, 0, 10)
-openButton.Text = "Open LEFTAC"
-openButton.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-openButton.TextColor3 = Color3.new(1, 1, 1)
-openButton.Font = Enum.Font.SourceSansBold
-openButton.TextSize = 14
+-- GUI Setup
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.ResetOnSpawn = false
 
-local scrollFrame = Instance.new("ScrollingFrame", gui)
-scrollFrame.Size = UDim2.new(0, 160, 0, 240)
-scrollFrame.Position = UDim2.new(1, -170, 0, 40)
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 1000)
-scrollFrame.ScrollBarThickness = 5
-scrollFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-scrollFrame.BorderSizePixel = 0
-scrollFrame.Visible = false
-scrollFrame.Active = true
-scrollFrame.Draggable = true
+local ToggleButton = Instance.new("TextButton", ScreenGui)
+ToggleButton.Size = UDim2.new(0, 100, 0, 30)
+ToggleButton.Position = UDim2.new(0, 10, 0, 10)
+ToggleButton.Text = "Open GUI"
+ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 
--- Toggle Open/Close
-openButton.MouseButton1Click:Connect(function()
-	scrollFrame.Visible = not scrollFrame.Visible
-	openButton.Text = scrollFrame.Visible and "Close LEFTAC" or "Open LEFTAC"
+local MainFrame = Instance.new("ScrollingFrame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 200, 0, 300)
+MainFrame.Position = UDim2.new(0, 10, 0, 50)
+MainFrame.CanvasSize = UDim2.new(0, 0, 0, 600)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.Visible = false
+MainFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+MainFrame.ScrollBarThickness = 6
+
+-- Dragging
+local dragging, dragInput, dragStart, startPos
+local function dragify(frame)
+	frame.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = frame.Position
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then dragging = false end
+			end)
+		end
+	end)
+	UserInputService.InputChanged:Connect(function(input)
+		if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
+			local delta = input.Position - dragStart
+			frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+		end
+	end)
+end
+dragify(MainFrame)
+
+ToggleButton.MouseButton1Click:Connect(function()
+	MainFrame.Visible = not MainFrame.Visible
+	ToggleButton.Text = MainFrame.Visible and "Close GUI" or "Open GUI"
 end)
 
--- Helper: Create Button
-local function createButton(name, initial, callback)
-	local btn = Instance.new("TextButton", scrollFrame)
+-- Create toggle buttons
+local function createToggle(name, default, callback)
+	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(1, -10, 0, 30)
-	btn.Position = UDim2.new(0, 5, 0, #scrollFrame:GetChildren() * 32)
-	btn.Text = name .. ": " .. (initial and "ON" or "OFF")
-	btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-	btn.TextColor3 = Color3.new(1, 1, 1)
-	btn.Font = Enum.Font.SourceSansBold
-	btn.TextSize = 14
-	callback(btn)
+	btn.Position = UDim2.new(0, 5, 0, (#MainFrame:GetChildren() - 1) * 35)
+	btn.Text = name .. ": " .. (default and "ON" or "OFF")
+	btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
+	btn.Parent = MainFrame
+	btn.MouseButton1Click:Connect(function()
+		default = not default
+		btn.Text = name .. ": " .. (default and "ON" or "OFF")
+		callback(default)
+	end)
 end
 
--- Kill Aura Toggle
-local killAuraOn = false
-local auraRange = 15
-createButton("Kill Aura", killAuraOn, function(btn)
-	btn.MouseButton1Click:Connect(function()
-		killAuraOn = not killAuraOn
-		btn.Text = "Kill Aura: " .. (killAuraOn and "ON" or "OFF")
-	end)
+createToggle("Kill Aura", killAuraOn, function(state) killAuraOn = state end)
+createToggle("Infinite Jump", infiniteJump, function(state) infiniteJump = state end)
+createToggle("Void Save", voidSave, function(state) voidSave = state end)
+createToggle("FPS Boost", fpsBoost, function(state)
+	fpsBoost = state
+	workspace.FallenPartsDestroyHeight = state and 0 or -500
+	game:GetService("Lighting").Brightness = state and 1 or 3
 end)
-
--- Infinite Jump Toggle
-local infJump = false
-createButton("Infinite Jump", infJump, function(btn)
-	btn.MouseButton1Click:Connect(function()
-		infJump = not infJump
-		btn.Text = "Infinite Jump: " .. (infJump and "ON" or "OFF")
-	end)
+createToggle("Speed Boost", speedBoost, function(state)
+	speedBoost = state
+	if lp.Character and lp.Character:FindFirstChild("Humanoid") then
+		lp.Character.Humanoid.WalkSpeed = state and 20 or 16
+	end
 end)
+createToggle("No Sword Cooldown", noSwordCooldown, function(state) noSwordCooldown = state end)
+createToggle("No Click Delay", noClickDelay, function(state) noClickDelay = state end)
+createToggle("Aim Assist", aimAssist, function(state) aimAssist = state end)
 
--- FPS Boost
-local fpsBoost = false
-createButton("FPS Boost", fpsBoost, function(btn)
-	btn.MouseButton1Click:Connect(function()
-		fpsBoost = not fpsBoost
-		btn.Text = "FPS Boost: " .. (fpsBoost and "ON" or "OFF")
-
-		if fpsBoost then
-			Lighting.FogEnd = 1000
-			Lighting.FogStart = 0
-			Lighting.Brightness = 1
-			Lighting.GlobalShadows = false
-			Lighting.Ambient = Color3.fromRGB(100, 100, 100)
-			Lighting.OutdoorAmbient = Color3.fromRGB(100, 100, 100)
-			for _, v in pairs(Lighting:GetChildren()) do if v:IsA("Sky") then v:Destroy() end end
-			local sky = Instance.new("Sky", Lighting)
-			sky.SkyboxBk = ""; sky.SkyboxDn = ""; sky.SkyboxFt = ""
-			sky.SkyboxLf = ""; sky.SkyboxRt = ""; sky.SkyboxUp = ""
-		else
-			Lighting.FogEnd = 100000
-			Lighting.GlobalShadows = true
-			Lighting.Brightness = 2
-		end
-	end)
-end)
-
--- Speed Boost
-local speedBoost = false
-createButton("Speed Boost", speedBoost, function(btn)
-	btn.MouseButton1Click:Connect(function()
-		speedBoost = not speedBoost
-		btn.Text = "Speed Boost: " .. (speedBoost and "ON" or "OFF")
-		local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
-		if hum then
-			hum.WalkSpeed = speedBoost and 20 or 16
-		end
-	end)
-end)
-
--- Aura Range Display
-local rangeDisplay = Instance.new("TextLabel", scrollFrame)
-rangeDisplay.Size = UDim2.new(1, -10, 0, 25)
-rangeDisplay.Position = UDim2.new(0, 5, 0, #scrollFrame:GetChildren() * 32)
-rangeDisplay.Text = "Aura Range: " .. auraRange
-rangeDisplay.TextColor3 = Color3.new(1, 1, 1)
-rangeDisplay.BackgroundTransparency = 1
-rangeDisplay.Font = Enum.Font.SourceSansBold
-rangeDisplay.TextSize = 14
-
-createButton("Range +", false, function(btn)
-	btn.MouseButton1Click:Connect(function()
-		auraRange = math.clamp(auraRange + 1, 1, 18)
-		rangeDisplay.Text = "Aura Range: " .. auraRange
-	end)
-end)
-
-createButton("Range -", false, function(btn)
-	btn.MouseButton1Click:Connect(function()
-		auraRange = math.clamp(auraRange - 1, 1, 18)
-		rangeDisplay.Text = "Aura Range: " .. auraRange
-	end)
-end)
-
--- Aim Assist (Smooth, Toggle)
-local aimAssist = false
-createButton("Aim Assist", aimAssist, function(btn)
-	btn.MouseButton1Click:Connect(function()
-		aimAssist = not aimAssist
-		btn.Text = "Aim Assist: " .. (aimAssist and "ON" or "OFF")
-	end)
-end)
-
--- Infinite Jump Logic
+-- Infinite Jump
 UserInputService.JumpRequest:Connect(function()
-	if infJump then
-		local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
-		if hum then
-			hum:ChangeState(Enum.HumanoidStateType.Jumping)
+	if infiniteJump and lp.Character and lp.Character:FindFirstChild("Humanoid") then
+		lp.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+	end
+end)
+
+-- Void Save
+RunService.Heartbeat:Connect(function()
+	if voidSave and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+		if lp.Character.HumanoidRootPart.Position.Y < -20 then
+			lp.Character.HumanoidRootPart.Velocity = Vector3.new(0, 50, 0)
 		end
 	end
 end)
 
--- Kill Aura Logic (360 degrees)
+-- Speed Reset on Respawn
+lp.CharacterAdded:Connect(function(char)
+	char:WaitForChild("Humanoid").WalkSpeed = speedBoost and 20 or 16
+end)
+
+-- Kill Aura
+local function attackTarget(target)
+	local tool = lp.Character and lp.Character:FindFirstChildOfClass("Tool")
+	if tool and target and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
+		local remote = tool:FindFirstChildWhichIsA("RemoteEvent", true)
+		if remote then
+			remote:FireServer(target)
+		end
+	end
+end
+
 task.spawn(function()
-	while true do
+	while task.wait(0.1) do
 		if killAuraOn and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
 			local hrp = lp.Character.HumanoidRootPart
 			for _, player in pairs(Players:GetPlayers()) do
@@ -159,25 +131,18 @@ task.spawn(function()
 					local target = player.Character
 					local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
 					if dist <= auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
-						local cam = workspace.CurrentCamera
-						local screenPos, onScreen = cam:WorldToViewportPoint(target.HumanoidRootPart.Position)
-						if onScreen then
-							local x = screenPos.X / cam.ViewportSize.X
-							local y = screenPos.Y / cam.ViewportSize.Y
-							VirtualInput:SendTouchEvent(1, 0, x, y)
-							VirtualInput:SendTouchEvent(1, 2, x, y)
-						end
+						attackTarget(target)
 					end
 				end
 			end
 		end
-		task.wait(0.1)
 	end
 end)
 
--- Smooth Aim Assist Loop
+-- Aim Assist
 RunService.RenderStepped:Connect(function()
 	if aimAssist and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+		local cam = workspace.CurrentCamera
 		local hrp = lp.Character.HumanoidRootPart
 		local closest, shortest = nil, math.huge
 
@@ -185,8 +150,7 @@ RunService.RenderStepped:Connect(function()
 			if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
 				local target = player.Character
 				local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
-				if dist < auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
-					local cam = workspace.CurrentCamera
+				if dist <= auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
 					local screenPos, onScreen = cam:WorldToViewportPoint(target.HumanoidRootPart.Position)
 					if onScreen and dist < shortest then
 						shortest = dist
@@ -197,91 +161,8 @@ RunService.RenderStepped:Connect(function()
 		end
 
 		if closest then
-			local cam = workspace.CurrentCamera
 			local direction = (closest.HumanoidRootPart.Position - cam.CFrame.Position).Unit
-			local smoothLook = cam.CFrame:Lerp(CFrame.lookAt(cam.CFrame.Position, cam.CFrame.Position + direction), 0.1)
-			cam.CFrame = smoothLook
-		end
-	end
-end)
-
--- Infinite Jump Logic
-UserInputService.JumpRequest:Connect(function()
-	if infJump then
-		local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
-		if hum then
-			hum:ChangeState(Enum.HumanoidStateType.Jumping)
-		end
-	end
-end)
-
--- Kill Aura Logic (360 degrees)
-task.spawn(function()
-	while true do
-		if killAuraOn and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-			local hrp = lp.Character.HumanoidRootPart
-			for _, player in pairs(Players:GetPlayers()) do
-				if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-					local target = player.Character
-					local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
-					if dist <= auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
-						local cam = workspace.CurrentCamera
-						local screenPos, onScreen = cam:WorldToViewportPoint(target.HumanoidRootPart.Position)
-						if onScreen then
-							local x = screenPos.X / cam.ViewportSize.X
-							local y = screenPos.Y / cam.ViewportSize.Y
-							VirtualInput:SendTouchEvent(1, 0, x, y)
-							VirtualInput:SendTouchEvent(1, 2, x, y)
-						end
-					end
-				end
-			end
-		end
-		task.wait(0.1)
-	end
-end)
-
--- Smooth Aim Assist Loop
-RunService.RenderStepped:Connect(function()
-	if aimAssist and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-		local hrp = lp.Character.HumanoidRootPart
-		local closest, shortest = nil, math.huge
-
-		for _, player in pairs(Players:GetPlayers()) do
-			if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-				local target = player.Character
-				local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
-				if dist < auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
-					local cam = workspace.CurrentCamera
-					local screenPos, onScreen = cam:WorldToViewportPoint(target.HumanoidRootPart.Position)
-					if onScreen and dist < shortest then
-						shortest = dist
-						closest = target
-					end
-				end
-			end
-		end
-
-		if closest then
-			local cam = workspace.CurrentCamera
-			local direction = (closest.HumanoidRootPart.Position - cam.CFrame.Position).Unit
-			local smoothLook = cam.CFrame:Lerp(CFrame.lookAt(cam.CFrame.Position, cam.CFrame.Position + direction), 0.1)
-			cam.CFrame = smoothLook
-		end
-	end
-end)
-
--- Toggle GUI with Shift key (PC only)
-local UserInput = game:GetService("UserInputService")
-UserInput.InputBegan:Connect(function(input, gameProcessed)
-	if gameProcessed then return end
-	if input.KeyCode == Enum.KeyCode.LeftShift then
-		local gui = game.Players.LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("BedWarsScript")
-		if gui then
-			local frame = gui:FindFirstChildOfClass("ScrollingFrame")
-			if frame then
-				frame.Visible = not frame.Visible
-			end
+			cam.CFrame = cam.CFrame:Lerp(CFrame.lookAt(cam.CFrame.Position, cam.CFrame.Position + direction), 0.15)
 		end
 	end
 end)
