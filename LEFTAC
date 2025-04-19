@@ -1,4 +1,4 @@
-local Players, RunService, Lighting, UIS = game:GetService("Players"), game:GetService("RunService"), game:GetService("Lighting"), game:GetService("UserInputService")
+local Players, RunService, Lighting = game:GetService("Players"), game:GetService("RunService"), game:GetService("Lighting")
 local VirtualInput = game:GetService("VirtualInputManager")
 local lp = Players.LocalPlayer
 
@@ -8,9 +8,9 @@ gui.Name = "BedWarsScript"
 gui.ResetOnSpawn = false
 
 local scrollFrame = Instance.new("ScrollingFrame", gui)
-scrollFrame.Size = UDim2.new(0, 170, 0, 230)
-scrollFrame.Position = UDim2.new(1, -180, 0, 40)
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 500)
+scrollFrame.Size = UDim2.new(0, 150, 0, 220)
+scrollFrame.Position = UDim2.new(1, -160, 0, 40)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 400)
 scrollFrame.ScrollBarThickness = 6
 scrollFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 scrollFrame.BackgroundTransparency = 0.2
@@ -18,28 +18,21 @@ scrollFrame.BorderSizePixel = 0
 scrollFrame.Active = true
 scrollFrame.Draggable = true
 
--- Button Utility
-local function createButton(text, callback)
-	local btn = Instance.new("TextButton")
+-- Utility: Create Button
+local function createButton(name, callback)
+	local btn = Instance.new("TextButton", scrollFrame)
 	btn.Size = UDim2.new(1, -10, 0, 30)
 	btn.Position = UDim2.new(0, 5, 0, #scrollFrame:GetChildren() * 32)
-	btn.Text = text
+	btn.Text = name
 	btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 	btn.TextColor3 = Color3.new(1, 1, 1)
 	btn.Font = Enum.Font.SourceSansBold
 	btn.TextSize = 14
-	btn.Parent = scrollFrame
-	btn.MouseButton1Click:Connect(function()
-		callback(btn)
-	end)
+	btn.MouseButton1Click:Connect(callback)
 end
 
--- Features
+-- Kill Aura (with Range)
 local killAuraOn = false
-local infJump = false
-local fpsBoost = false
-local speedBoost = false
-local noClickDelay = false
 local auraRange = 15
 
 createButton("Kill Aura: OFF", function(self)
@@ -47,14 +40,21 @@ createButton("Kill Aura: OFF", function(self)
 	self.Text = killAuraOn and "Kill Aura: ON" or "Kill Aura: OFF"
 end)
 
+-- Infinite Jump
+local infJump = false
+
 createButton("Infinite Jump: OFF", function(self)
 	infJump = not infJump
 	self.Text = infJump and "Infinite Jump: ON" or "Infinite Jump: OFF"
 end)
 
+-- FPS Boost
+local fpsBoost = false
+
 createButton("FPS Boost: OFF", function(self)
 	fpsBoost = not fpsBoost
 	self.Text = fpsBoost and "FPS Boost: ON" or "FPS Boost: OFF"
+
 	if fpsBoost then
 		Lighting.FogEnd = 1000
 		Lighting.FogStart = 0
@@ -73,20 +73,7 @@ createButton("FPS Boost: OFF", function(self)
 	end
 end)
 
-createButton("Speed Boost: OFF", function(self)
-	speedBoost = not speedBoost
-	self.Text = speedBoost and "Speed Boost: ON" or "Speed Boost: OFF"
-	if lp.Character and lp.Character:FindFirstChildOfClass("Humanoid") then
-		lp.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = speedBoost and 20 or 16
-	end
-end)
-
-createButton("No Click Delay: OFF", function(self)
-	noClickDelay = not noClickDelay
-	self.Text = noClickDelay and "No Click Delay: ON" or "No Click Delay: OFF"
-end)
-
--- Aura Range Display
+-- Range Setting
 local rangeDisplay = Instance.new("TextLabel", scrollFrame)
 rangeDisplay.Size = UDim2.new(1, -10, 0, 25)
 rangeDisplay.Position = UDim2.new(0, 5, 0, #scrollFrame:GetChildren() * 32)
@@ -107,14 +94,13 @@ createButton("Range -", function()
 end)
 
 -- Infinite Jump Logic
-UIS.JumpRequest:Connect(function()
-	if infJump and lp.Character then
-		local hum = lp.Character:FindFirstChildOfClass("Humanoid")
-		if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+game:GetService("UserInputService").JumpRequest:Connect(function()
+	if infJump then
+		lp.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
 	end
 end)
 
--- Kill Aura Logic
+-- Kill Aura Logic (Rapid Fire)
 task.spawn(function()
 	while true do
 		if killAuraOn and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
@@ -129,14 +115,8 @@ task.spawn(function()
 						if onScreen then
 							local x = screenPos.X / cam.ViewportSize.X
 							local y = screenPos.Y / cam.ViewportSize.Y
-							if noClickDelay then
-								VirtualInput:SendTouchEvent(1, 0, x, y)
-								VirtualInput:SendTouchEvent(1, 2, x, y)
-							else
-								VirtualInput:SendTouchEvent(1, 0, x, y)
-								task.wait(0.1)
-								VirtualInput:SendTouchEvent(1, 2, x, y)
-							end
+							VirtualInput:SendTouchEvent(1, 0, x, y)
+							VirtualInput:SendTouchEvent(1, 2, x, y)
 						end
 					end
 				end
@@ -146,13 +126,34 @@ task.spawn(function()
 	end
 end)
 
--- Character respawn persistence
+-- No Click Delay
+local noClickDelayOn = false
+createButton("No Click Delay: OFF", function(self)
+	noClickDelayOn = not noClickDelayOn
+	self.Text = noClickDelayOn and "No Click Delay: ON" or "No Click Delay: OFF"
+end)
+
+-- No Click Delay Logic (Rapid Attack)
+game:GetService("RunService").Heartbeat:Connect(function()
+	if noClickDelayOn and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+		local hrp = lp.Character.HumanoidRootPart
+		for _, player in pairs(Players:GetPlayers()) do
+			if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+				local target = player.Character
+				local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
+				if dist <= auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
+					-- Directly fire the attack
+					workspace:FindFirstChildOfClass("RemoteEvent"):FireServer()
+				end
+			end
+		end
+	end
+end)
+
+-- GUI persist on respawn
 lp.CharacterAdded:Connect(function()
 	task.wait(1)
 	if not lp:FindFirstChild("PlayerGui"):FindFirstChild("BedWarsScript") then
 		gui.Parent = lp:WaitForChild("PlayerGui")
-	end
-	if speedBoost and lp.Character and lp.Character:FindFirstChildOfClass("Humanoid") then
-		lp.Character:FindFirstChildOfClass("Humanoid").WalkSpeed = 20
 	end
 end)
