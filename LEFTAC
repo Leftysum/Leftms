@@ -92,7 +92,7 @@ rangeMinusButton.MouseButton1Click:Connect(function()
     rangeDisplay.Text = "Aura Range: " .. auraRange
 end)
 
--- Kill Aura Functionality with proper range
+-- Kill Aura Functionality
 task.spawn(function()
     while true do
         if killAuraOn and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
@@ -100,20 +100,16 @@ task.spawn(function()
             for _, player in pairs(Players:GetPlayers()) do
                 if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
                     local target = player.Character
-                    local targetHRP = target:FindFirstChild("HumanoidRootPart")
-                    if targetHRP then
-                        local dist = (targetHRP.Position - hrp.Position).Magnitude
-                        if dist <= auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
-                            -- Attack the target if within range
-                            local cam = workspace.CurrentCamera
-                            local screenPos, onScreen = cam:WorldToViewportPoint(targetHRP.Position)
-                            if onScreen then
-                                -- Send input to attack the target if within range and on screen
-                                local x = screenPos.X / cam.ViewportSize.X
-                                local y = screenPos.Y / cam.ViewportSize.Y
-                                VirtualInput:SendTouchEvent(1, 0, x, y)
-                                VirtualInput:SendTouchEvent(1, 2, x, y)
-                            end
+                    local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
+                    if dist <= auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
+                        -- Send input to attack the target if within range
+                        local cam = workspace.CurrentCamera
+                        local screenPos, onScreen = cam:WorldToViewportPoint(target.HumanoidRootPart.Position)
+                        if onScreen then
+                            local x = screenPos.X / cam.ViewportSize.X
+                            local y = screenPos.Y / cam.ViewportSize.Y
+                            VirtualInput:SendTouchEvent(1, 0, x, y)
+                            VirtualInput:SendTouchEvent(1, 2, x, y)
                         end
                     end
                 end
