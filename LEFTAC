@@ -7,9 +7,33 @@ local gui = Instance.new("ScreenGui", lp:WaitForChild("PlayerGui"))
 gui.Name = "BedWarsScript"
 gui.ResetOnSpawn = false
 
-local scrollFrame = Instance.new("ScrollingFrame", gui)
-scrollFrame.Size = UDim2.new(0, 150, 0, 250)
-scrollFrame.Position = UDim2.new(1, -160, 0, 40)
+-- Main Frame
+local mainFrame = Instance.new("Frame", gui)
+mainFrame.Size = UDim2.new(0, 250, 0, 400)
+mainFrame.Position = UDim2.new(1, -260, 0, 40)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+mainFrame.BackgroundTransparency = 0.2
+mainFrame.BorderSizePixel = 0
+mainFrame.Visible = false -- Start with GUI hidden
+
+-- Toggle Button (Open/Close)
+local toggleButton = Instance.new("TextButton", gui)
+toggleButton.Size = UDim2.new(0, 50, 0, 50)
+toggleButton.Position = UDim2.new(1, -60, 0, 40)
+toggleButton.Text = "≡"
+toggleButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+toggleButton.TextColor3 = Color3.new(1, 1, 1)
+toggleButton.Font = Enum.Font.SourceSansBold
+toggleButton.TextSize = 24
+
+toggleButton.MouseButton1Click:Connect(function()
+	mainFrame.Visible = not mainFrame.Visible
+end)
+
+-- Scrollable Frame Inside Main Frame
+local scrollFrame = Instance.new("ScrollingFrame", mainFrame)
+scrollFrame.Size = UDim2.new(1, 0, 1, -50)
+scrollFrame.Position = UDim2.new(0, 0, 0, 50)
 scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 400)
 scrollFrame.ScrollBarThickness = 6
 scrollFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -132,6 +156,7 @@ task.spawn(function()
 						if onScreen then
 							local x = screenPos.X / cam.ViewportSize.X
 							local y = screenPos.Y / cam.ViewportSize.Y
+							-- Simulate touch input
 							VirtualInput:SendTouchEvent(1, 0, x, y)
 							VirtualInput:SendTouchEvent(1, 2, x, y)
 						end
@@ -148,5 +173,38 @@ lp.CharacterAdded:Connect(function()
 	task.wait(1)
 	if not lp:FindFirstChild("PlayerGui"):FindFirstChild("BedWarsScript") then
 		gui.Parent = lp:WaitForChild("PlayerGui")
+	end
+end)
+
+-- Touch input for the GUI (Mobile Compatibility)
+scrollFrame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		-- Add your custom touch input handling logic here
+		-- (for example, drag the GUI frame)
+	end
+end)
+
+-- Draggable GUI Functionality
+local dragging = false
+local dragInput, dragStart, startPos
+
+mainFrame.InputBegan:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = true
+		dragStart = input.Position
+		startPos = mainFrame.Position
+	end
+end)
+
+mainFrame.InputChanged:Connect(function(input)
+	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+		local delta = input.Position - dragStart
+		mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+end)
+
+mainFrame.InputEnded:Connect(function(input)
+	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+		dragging = false
 	end
 end)
