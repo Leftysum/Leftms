@@ -1,101 +1,193 @@
-local vim = game:GetService("VirtualInputManager")
-local player = game.Players.LocalPlayer
+--// Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
+local VirtualInput = game:GetService("VirtualInputManager")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local lp = Players.LocalPlayer
+local UserInputService = game:GetService("UserInputService")
 
-local running, cps = false, 38
-local draggingSlider, draggingCrosshair = false, false
-
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui.Name = "LEFTAC"
+--// GUI Setup
+local gui = Instance.new("ScreenGui", lp:WaitForChild("PlayerGui"))
+gui.Name = "BedWarsScript"
 gui.ResetOnSpawn = false
 
-local gui2 = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui2.Name = "LEFTAC_2"
-gui2.ResetOnSpawn = false
+local scrollFrame = Instance.new("ScrollingFrame", gui)
+scrollFrame.Size = UDim2.new(0, 150, 0, 220)
+scrollFrame.Position = UDim2.new(1, -160, 0, 40)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 400)
+scrollFrame.ScrollBarThickness = 6
+scrollFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+scrollFrame.BackgroundTransparency = 0.2
+scrollFrame.BorderSizePixel = 0
+scrollFrame.Active = true
+scrollFrame.Draggable = true
 
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0, 120, 0, 80)
-frame.Position = UDim2.new(1, -130, 0, 30)
-frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-frame.BackgroundTransparency = 0.2
-frame.BorderSizePixel = 0
-frame.Visible = false
-frame.Active = true
-frame.Draggable = true
-frame.Modal = false
-frame.Selectable = false
-
-local toggle = Instance.new("TextButton", frame)
-toggle.Size = UDim2.new(0, 100, 0, 30)
-toggle.Position = UDim2.new(0, 10, 0, 10)
-toggle.Text = "Auto OFF"
-toggle.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-toggle.TextColor3 = Color3.new(1, 1, 1)
-toggle.Font = Enum.Font.SourceSansBold
-toggle.TextSize = 14
-toggle.Modal = false
-toggle.AutoButtonColor = true
-
-local cpsLabel = Instance.new("TextLabel", frame)
-cpsLabel.Size = UDim2.new(0, 100, 0, 20)
-cpsLabel.Position = UDim2.new(0, 10, 0, 45)
-cpsLabel.Text = "CPS: " .. cps
-cpsLabel.BackgroundTransparency = 1
-cpsLabel.TextColor3 = Color3.new(1, 1, 1)
-cpsLabel.Font = Enum.Font.SourceSans
-cpsLabel.TextSize = 12
-
-local openBtn = Instance.new("TextButton", gui)
-openBtn.Size = UDim2.new(0, 90, 0, 28)
-openBtn.Position = UDim2.new(1, -100, 0, 10)
-openBtn.Text = "Open LEFTAC"
-openBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-openBtn.BackgroundTransparency = 0.3
-openBtn.TextColor3 = Color3.new(1, 1, 1)
-openBtn.Font = Enum.Font.SourceSansSemibold
-openBtn.TextSize = 13
-openBtn.AutoButtonColor = true
-openBtn.Modal = false
-
-local corner = Instance.new("UICorner")
-corner.CornerRadius = UDim.new(0, 6)
-corner.Parent = openBtn
-
--- Crosshair
-local crosshair = Instance.new("Frame", gui2)
-crosshair.Size = UDim2.new(0, 15, 0, 15)
-crosshair.Position = UDim2.new(0.5, -10, 0.5, -10)
-crosshair.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-crosshair.BorderSizePixel = 0
-crosshair.BackgroundTransparency = 0.3
-crosshair.Active = true
-crosshair.Modal = false
-crosshair.Selectable = false
-
--- Open/Close GUI toggle
-openBtn.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.Touch then
-		frame.Visible = not frame.Visible
-		openBtn.Text = frame.Visible and "Close LEFTAC" or "Open LEFTAC"
-	end
-end)
-
--- Autoclicking loop
-local function autoClick()
-	while running do
-		local x = crosshair.AbsolutePosition.X + (crosshair.AbsoluteSize.X / 2)
-		local y = crosshair.AbsolutePosition.Y + (crosshair.AbsoluteSize.Y / 2)
-		vim:SendTouchEvent(1, 0, x, y) -- begin
-		vim:SendTouchEvent(1, 2, x, y) -- end
-		task.wait(1 / cps)
-	end
+--// Utility: Button Creation Function
+local function createButton(name, callback)
+    local btn = Instance.new("TextButton", scrollFrame)
+    btn.Size = UDim2.new(1, -10, 0, 30)
+    btn.Position = UDim2.new(0, 5, 0, #scrollFrame:GetChildren() * 32)
+    btn.Text = name
+    btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+    btn.TextColor3 = Color3.new(1, 1, 1)
+    btn.Font = Enum.Font.SourceSansBold
+    btn.TextSize = 14
+    btn.MouseButton1Click:Connect(callback)
 end
 
--- Toggle start/stop
-toggle.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.Touch then
-		running = not running
-		toggle.Text = running and "Auto ON" or "Auto OFF"
-		toggle.BackgroundColor3 = running and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-		if running then task.spawn(autoClick) end
-	end
+--// Variables
+local killAuraOn = false
+local infJump = false
+local fpsBoost = false
+local noClickDelayOn = false
+local auraRange = 15
+
+--// Kill Aura Button
+createButton("Kill Aura: OFF", function(self)
+    killAuraOn = not killAuraOn
+    self.Text = killAuraOn and "Kill Aura: ON" or "Kill Aura: OFF"
+end)
+
+--// Infinite Jump Button
+createButton("Infinite Jump: OFF", function(self)
+    infJump = not infJump
+    self.Text = infJump and "Infinite Jump: ON" or "Infinite Jump: OFF"
+end)
+
+--// FPS Boost Button
+createButton("FPS Boost: OFF", function(self)
+    fpsBoost = not fpsBoost
+    self.Text = fpsBoost and "FPS Boost: ON" or "FPS Boost: OFF"
+
+    -- Apply FPS Boost settings
+    if fpsBoost then
+        Lighting.FogEnd = 1000
+        Lighting.FogStart = 0
+        Lighting.Brightness = 1
+        Lighting.GlobalShadows = false
+        Lighting.Ambient = Color3.fromRGB(100, 100, 100)
+        Lighting.OutdoorAmbient = Color3.fromRGB(100, 100, 100)
+        Lighting.Sky = nil
+        local sky = Instance.new("Sky", Lighting)
+        sky.SkyboxBk = ""
+        sky.SkyboxDn = ""
+        sky.SkyboxFt = ""
+        sky.SkyboxLf = ""
+        sky.SkyboxRt = ""
+        sky.SkyboxUp = ""
+    end
+end)
+
+--// Range Adjustment Button
+local rangeDisplay = Instance.new("TextLabel", scrollFrame)
+rangeDisplay.Size = UDim2.new(1, -10, 0, 25)
+rangeDisplay.Position = UDim2.new(0, 5, 0, #scrollFrame:GetChildren() * 32)
+rangeDisplay.Text = "Aura Range: 15"
+rangeDisplay.TextColor3 = Color3.new(1, 1, 1)
+rangeDisplay.BackgroundTransparency = 1
+rangeDisplay.Font = Enum.Font.SourceSansBold
+rangeDisplay.TextSize = 14
+
+createButton("Range +", function()
+    auraRange = math.clamp(auraRange + 1, 1, 18)
+    rangeDisplay.Text = "Aura Range: " .. auraRange
+end)
+
+createButton("Range -", function()
+    auraRange = math.clamp(auraRange - 1, 1, 18)
+    rangeDisplay.Text = "Aura Range: " .. auraRange
+end)
+
+--// Infinite Jump Logic
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if infJump then
+        lp.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+    end
+end)
+
+--// Kill Aura Logic (Rapid Fire)
+task.spawn(function()
+    while true do
+        if killAuraOn and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+            local hrp = lp.Character.HumanoidRootPart
+            for _, player in pairs(Players:GetPlayers()) do
+                if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local target = player.Character
+                    local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
+                    if dist <= auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
+                        -- Attack logic (Rapid Fire)
+                        local cam = workspace.CurrentCamera
+                        local screenPos, onScreen = cam:WorldToViewportPoint(target.HumanoidRootPart.Position)
+                        if onScreen then
+                            local x = screenPos.X / cam.ViewportSize.X
+                            local y = screenPos.Y / cam.ViewportSize.Y
+                            -- Simulate touch input for Android (Mobile)
+                            VirtualInput:SendTouchEvent(1, 0, x, y)  -- Simulate touch start
+                            VirtualInput:SendTouchEvent(1, 2, x, y)  -- Simulate touch release
+                        end
+                    end
+                end
+            end
+        end
+        task.wait(0.1) -- Run every 0.1 seconds to prevent lag
+    end
+end)
+
+--// No Click Delay Logic (Rapid Attack)
+game:GetService("RunService").Heartbeat:Connect(function()
+    if noClickDelayOn and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
+        local hrp = lp.Character.HumanoidRootPart
+        for _, player in pairs(Players:GetPlayers()) do
+            if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                local target = player.Character
+                local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
+                if dist <= auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
+                    -- Rapid Attack: Fire RemoteEvent directly
+                    local remoteEvent = ReplicatedStorage:FindFirstChild("RemoteEvent")  -- Replace with actual event name
+                    if remoteEvent then
+                        remoteEvent:FireServer(target)  -- Fire attack event on target
+                    end
+                end
+            end
+        end
+    end
+end)
+
+--// No Click Delay Button
+createButton("No Click Delay: OFF", function(self)
+    noClickDelayOn = not noClickDelayOn
+    self.Text = noClickDelayOn and "No Click Delay: ON" or "No Click Delay: OFF"
+end)
+
+--// Respawn Handling: Keep GUI Visible After Respawn
+lp.CharacterAdded:Connect(function()
+    task.wait(1)
+    if not lp:FindFirstChild("PlayerGui"):FindFirstChild("BedWarsScript") then
+        gui.Parent = lp:WaitForChild("PlayerGui")
+    end
+end)
+
+--// Mobile Input Compatibility for UI Dragging
+scrollFrame.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.UserInputType == Enum.UserInputType.Touch then
+        local dragStart = input.Position
+        local startPos = scrollFrame.Position
+
+        local function updateDrag(input)
+            local delta = input.Position - dragStart
+            scrollFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+
+        -- Detect Touch End
+        local function onTouchEnd()
+            UserInputService.InputChanged:Disconnect(updateDrag)
+            UserInputService.InputEnded:Disconnect(onTouchEnd)
+        end
+
+        -- Set up the drag
+        UserInputService.InputChanged:Connect(updateDrag)
+        UserInputService.InputEnded:Connect(onTouchEnd)
+    end
 end)
