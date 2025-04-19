@@ -1,18 +1,6 @@
 local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
 local lp = Players.LocalPlayer
-local RunService = game:GetService("RunService")
-local VirtualInput = game:GetService("VirtualInputManager")
-local UserInputService = game:GetService("UserInputService")
-
--- Wait for PlayerGui to load
-repeat task.wait() until lp:FindFirstChild("PlayerGui")
-
--- Remove old GUI if exists
-if lp.PlayerGui:FindFirstChild("BedWarsScript") then
-	lp.PlayerGui.BedWarsScript:Destroy()
-end
-
--- Create the GUI
 local gui = Instance.new("ScreenGui")
 gui.Name = "BedWarsScript"
 gui.ResetOnSpawn = false
@@ -20,28 +8,25 @@ gui.IgnoreGuiInset = true
 gui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 gui.Parent = lp:WaitForChild("PlayerGui")
 
--- Create toggle button (top-right corner)
-local openCloseButton = Instance.new("TextButton")
-openCloseButton.Name = "OpenCloseButton"
-openCloseButton.Size = UDim2.new(0, 50, 0, 50)
-openCloseButton.Position = UDim2.new(1, -60, 0, 10)
-openCloseButton.Text = "+"
-openCloseButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-openCloseButton.TextColor3 = Color3.new(1, 1, 1)
-openCloseButton.TextScaled = true
-openCloseButton.Parent = gui
+-- Toggle Button
+local toggleButton = Instance.new("TextButton")
+toggleButton.Size = UDim2.new(0, 40, 0, 40)
+toggleButton.Position = UDim2.new(1, -50, 0, 10)
+toggleButton.BackgroundColor3 = Color3.fromRGB(30,30,30)
+toggleButton.TextColor3 = Color3.new(1,1,1)
+toggleButton.Text = "+"
+toggleButton.TextScaled = true
+toggleButton.Parent = gui
 
--- Main draggable frame
+-- Main Frame
 local mainFrame = Instance.new("Frame")
-mainFrame.Name = "MainFrame"
-mainFrame.Size = UDim2.new(0, 250, 0, 400)
-mainFrame.Position = UDim2.new(0.5, -125, 0.5, -200)
-mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-mainFrame.BorderSizePixel = 0
+mainFrame.Size = UDim2.new(0, 250, 0, 300)
+mainFrame.Position = UDim2.new(0.5, -125, 0.5, -150)
+mainFrame.BackgroundColor3 = Color3.fromRGB(20,20,20)
 mainFrame.Visible = false
 mainFrame.Parent = gui
 
--- Enable mobile dragging
+-- Drag support
 local dragging = false
 local dragInput, dragStart, startPos
 
@@ -50,6 +35,7 @@ mainFrame.InputBegan:Connect(function(input)
 		dragging = true
 		dragStart = input.Position
 		startPos = mainFrame.Position
+
 		input.Changed:Connect(function()
 			if input.UserInputState == Enum.UserInputState.End then
 				dragging = false
@@ -64,7 +50,7 @@ mainFrame.InputChanged:Connect(function(input)
 	end
 end)
 
-UserInputService.InputChanged:Connect(function(input)
+UIS.InputChanged:Connect(function(input)
 	if input == dragInput and dragging then
 		local delta = input.Position - dragStart
 		mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X,
@@ -72,8 +58,18 @@ UserInputService.InputChanged:Connect(function(input)
 	end
 end)
 
--- Toggle GUI on button click
-openCloseButton.MouseButton1Click:Connect(function()
+-- Toggle open/close
+toggleButton.MouseButton1Click:Connect(function()
 	mainFrame.Visible = not mainFrame.Visible
-	openCloseButton.Text = mainFrame.Visible and "-" or "+"
+	toggleButton.Text = mainFrame.Visible and "-" or "+"
 end)
+
+-- Label test
+local label = Instance.new("TextLabel")
+label.Size = UDim2.new(1, 0, 0, 30)
+label.Position = UDim2.new(0, 0, 0, 0)
+label.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+label.TextColor3 = Color3.new(1, 1, 1)
+label.Text = "BedWars Script GUI"
+label.TextScaled = true
+label.Parent = mainFrame
