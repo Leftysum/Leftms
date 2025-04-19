@@ -5,7 +5,7 @@
 
 
 
-# Left's Mobile Auto Clicker
+# Left's Mobile KA Season 13
 the loadstring under me is ios
 -------------------------------
 loadstring(game:HttpGet('https://raw.githubusercontent.com/Leftysum/Leftms/refs/heads/main/LEFTAC', true))()
