@@ -1,135 +1,128 @@
-local Players, RunService, Lighting = game:GetService("Players"), game:GetService("RunService"), game:GetService("Lighting")
+-- SERVICES
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Lighting = game:GetService("Lighting")
 local VirtualInput = game:GetService("VirtualInputManager")
-local lp = Players.LocalPlayer
+local LocalPlayer = Players.LocalPlayer
 
--- GUI Setup
-local gui = Instance.new("ScreenGui", lp:WaitForChild("PlayerGui"))
-gui.Name = "BedWarsScript"
+-- GUI
+local gui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+gui.Name = "BWEnhancer"
 gui.ResetOnSpawn = false
 
-local scrollFrame = Instance.new("ScrollingFrame", gui)
-scrollFrame.Size = UDim2.new(0, 150, 0, 220)
-scrollFrame.Position = UDim2.new(1, -160, 0, 40)
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 400)
-scrollFrame.ScrollBarThickness = 6
-scrollFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-scrollFrame.BackgroundTransparency = 0.2
-scrollFrame.BorderSizePixel = 0
-scrollFrame.Active = true
-scrollFrame.Draggable = true
+local frame = Instance.new("ScrollingFrame", gui)
+frame.Size = UDim2.new(0, 160, 0, 280)
+frame.Position = UDim2.new(1, -170, 0.4, -140)
+frame.CanvasSize = UDim2.new(0, 0, 2, 0)
+frame.ScrollBarThickness = 5
+frame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+frame.BackgroundTransparency = 0.2
+frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
 
--- Utility: Create Button
-local function createButton(name, callback)
-	local btn = Instance.new("TextButton", scrollFrame)
-	btn.Size = UDim2.new(1, -10, 0, 30)
-	btn.Position = UDim2.new(0, 5, 0, #scrollFrame:GetChildren() * 32)
-	btn.Text = name
-	btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-	btn.TextColor3 = Color3.new(1, 1, 1)
-	btn.Font = Enum.Font.SourceSansBold
-	btn.TextSize = 14
-	btn.MouseButton1Click:Connect(callback)
+local function makeToggle(name, defaultState, onToggle)
+	local button = Instance.new("TextButton", frame)
+	button.Size = UDim2.new(1, -10, 0, 30)
+	button.Position = UDim2.new(0, 5, 0, #frame:GetChildren() * 35)
+	button.TextColor3 = Color3.new(1,1,1)
+	button.BackgroundColor3 = defaultState and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
+	button.Text = name .. ": " .. (defaultState and "ON" or "OFF")
+	button.Font = Enum.Font.SourceSansBold
+	button.TextSize = 14
+	button.AutoButtonColor = true
+
+	local state = defaultState
+
+	button.MouseButton1Click:Connect(function()
+		state = not state
+		button.Text = name .. ": " .. (state and "ON" or "OFF")
+		button.BackgroundColor3 = state and Color3.fromRGB(0,200,0) or Color3.fromRGB(200,0,0)
+		onToggle(state)
+	end)
 end
-
--- Kill Aura (with Range)
-local killAuraOn = false
-local auraRange = 15
-
-createButton("Kill Aura: OFF", function(self)
-	killAuraOn = not killAuraOn
-	self.Text = killAuraOn and "Kill Aura: ON" or "Kill Aura: OFF"
-end)
 
 -- Infinite Jump
 local infJump = false
+makeToggle("Infinite Jump", false, function(state)
+	infJump = state
+end)
+LocalPlayer.CharacterAdded:Connect(function(char)
+	RunService.RenderStepped:Connect(function()
+		if infJump and char:FindFirstChild("Humanoid") then
+			char.Humanoid:ChangeState(3)
+		end
+	end)
+end)
 
-createButton("Infinite Jump: OFF", function(self)
-	infJump = not infJump
-	self.Text = infJump and "Infinite Jump: ON" or "Infinite Jump: OFF"
+-- Void Save
+local voidSave = false
+makeToggle("Void Save", false, function(state)
+	voidSave = state
+end)
+RunService.Heartbeat:Connect(function()
+	if voidSave and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+		local y = LocalPlayer.Character.HumanoidRootPart.Position.Y
+		if y < -10 then
+			LocalPlayer.Character.HumanoidRootPart.Velocity = Vector3.new(0, 100, 0)
+		end
+	end
 end)
 
 -- FPS Boost
 local fpsBoost = false
-
-createButton("FPS Boost: OFF", function(self)
-	fpsBoost = not fpsBoost
-	self.Text = fpsBoost and "FPS Boost: ON" or "FPS Boost: OFF"
-
-	if fpsBoost then
-		Lighting.FogEnd = 1000
-		Lighting.FogStart = 0
+makeToggle("FPS Boost", false, function(state)
+	fpsBoost = state
+	if state then
+		Lighting.FogStart = 100
+		Lighting.FogEnd = 100
 		Lighting.Brightness = 1
 		Lighting.GlobalShadows = false
-		Lighting.Ambient = Color3.fromRGB(100, 100, 100)
-		Lighting.OutdoorAmbient = Color3.fromRGB(100, 100, 100)
-		Lighting.Sky = nil
-		local sky = Instance.new("Sky", Lighting)
-		sky.SkyboxBk = ""
-		sky.SkyboxDn = ""
-		sky.SkyboxFt = ""
-		sky.SkyboxLf = ""
-		sky.SkyboxRt = ""
-		sky.SkyboxUp = ""
+		Lighting.OutdoorAmbient = Color3.fromRGB(128,128,128)
+		Lighting.Ambient = Color3.fromRGB(128,128,128)
+		Lighting.TimeOfDay = "00:00:00"
+	else
+		Lighting.FogStart = 0
+		Lighting.FogEnd = 1000
+		Lighting.GlobalShadows = true
+		Lighting.Brightness = 2
 	end
 end)
 
--- Range Setting
-local rangeDisplay = Instance.new("TextLabel", scrollFrame)
-rangeDisplay.Size = UDim2.new(1, -10, 0, 25)
-rangeDisplay.Position = UDim2.new(0, 5, 0, #scrollFrame:GetChildren() * 32)
-rangeDisplay.Text = "Aura Range: 15"
-rangeDisplay.TextColor3 = Color3.new(1, 1, 1)
-rangeDisplay.BackgroundTransparency = 1
-rangeDisplay.Font = Enum.Font.SourceSansBold
-rangeDisplay.TextSize = 14
-
-createButton("Range +", function()
-	auraRange = math.clamp(auraRange + 1, 1, 18)
-	rangeDisplay.Text = "Aura Range: " .. auraRange
-end)
-
-createButton("Range -", function()
-	auraRange = math.clamp(auraRange - 1, 1, 18)
-	rangeDisplay.Text = "Aura Range: " .. auraRange
-end)
-
--- Infinite Jump Logic
-game:GetService("UserInputService").JumpRequest:Connect(function()
-	if infJump then
-		lp.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
+-- Speed Boost
+local speedBoost = false
+makeToggle("Speed Boost", false, function(state)
+	speedBoost = state
+	if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+		LocalPlayer.Character.Humanoid.WalkSpeed = state and 20 or 16
 	end
 end)
+LocalPlayer.CharacterAdded:Connect(function(char)
+	char:WaitForChild("Humanoid").WalkSpeed = speedBoost and 20 or 16
+end)
 
--- Kill Aura Logic
-task.spawn(function()
-	while true do
-		if killAuraOn and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-			local hrp = lp.Character.HumanoidRootPart
-			for _, player in pairs(Players:GetPlayers()) do
-				if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-					local target = player.Character
-					local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
-					if dist <= auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
-						local cam = workspace.CurrentCamera
-						local screenPos, onScreen = cam:WorldToViewportPoint(target.HumanoidRootPart.Position)
-						if onScreen then
-							local x = screenPos.X / cam.ViewportSize.X
-							local y = screenPos.Y / cam.ViewportSize.Y
-							VirtualInput:SendTouchEvent(1, 0, x, y)
-							VirtualInput:SendTouchEvent(1, 2, x, y)
-						end
-					end
+-- Kill Aura
+local killAura = false
+local auraRange = 15
+makeToggle("Kill Aura", false, function(state)
+	killAura = state
+end)
+RunService.Heartbeat:Connect(function()
+	if not killAura then return end
+	local char = LocalPlayer.Character
+	if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= LocalPlayer and player.Team ~= LocalPlayer.Team then
+			local targetChar = player.Character
+			if targetChar and targetChar:FindFirstChild("Humanoid") and targetChar:FindFirstChild("HumanoidRootPart") then
+				if (targetChar.HumanoidRootPart.Position - char.HumanoidRootPart.Position).Magnitude <= auraRange then
+					local cam = workspace.CurrentCamera
+					local pos = cam:WorldToViewportPoint(targetChar.HumanoidRootPart.Position + Vector3.new(0,1.5,0))
+					VirtualInput:SendTouchEvent(1, 0, pos.X / cam.ViewportSize.X, pos.Y / cam.ViewportSize.Y)
+					VirtualInput:SendTouchEvent(1, 2, pos.X / cam.ViewportSize.X, pos.Y / cam.ViewportSize.Y)
 				end
 			end
 		end
-		task.wait(0.1)
-	end
-end)
-
--- GUI persist on respawn
-lp.CharacterAdded:Connect(function()
-	task.wait(1)
-	if not lp:FindFirstChild("PlayerGui"):FindFirstChild("BedWarsScript") then
-		gui.Parent = lp:WaitForChild("PlayerGui")
 	end
 end)
