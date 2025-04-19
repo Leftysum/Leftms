@@ -4,7 +4,6 @@ local UserInputService = game:GetService("UserInputService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local lp = Players.LocalPlayer
 
--- GUI
 local gui = Instance.new("ScreenGui", lp:WaitForChild("PlayerGui"))
 gui.Name = "BedWarsScript"
 gui.ResetOnSpawn = false
@@ -29,13 +28,11 @@ scrollFrame.Visible = false
 scrollFrame.Active = true
 scrollFrame.Draggable = true
 
--- Toggle Open/Close
 openButton.MouseButton1Click:Connect(function()
 	scrollFrame.Visible = not scrollFrame.Visible
 	openButton.Text = scrollFrame.Visible and "Close LEFTAC" or "Open LEFTAC"
 end)
 
--- Helper: Create Button
 local function createButton(name, initial, callback)
 	local btn = Instance.new("TextButton", scrollFrame)
 	btn.Size = UDim2.new(1, -10, 0, 30)
@@ -48,7 +45,6 @@ local function createButton(name, initial, callback)
 	callback(btn)
 end
 
--- Kill Aura Toggle
 local killAuraOn = false
 local auraRange = 15
 createButton("Kill Aura", killAuraOn, function(btn)
@@ -58,7 +54,6 @@ createButton("Kill Aura", killAuraOn, function(btn)
 	end)
 end)
 
--- Infinite Jump Toggle
 local infJump = false
 createButton("Infinite Jump", infJump, function(btn)
 	btn.MouseButton1Click:Connect(function()
@@ -67,7 +62,6 @@ createButton("Infinite Jump", infJump, function(btn)
 	end)
 end)
 
--- FPS Boost
 local fpsBoost = false
 createButton("FPS Boost", fpsBoost, function(btn)
 	btn.MouseButton1Click:Connect(function()
@@ -93,7 +87,6 @@ createButton("FPS Boost", fpsBoost, function(btn)
 	end)
 end)
 
--- Speed Boost
 local speedBoost = false
 createButton("Speed Boost", speedBoost, function(btn)
 	btn.MouseButton1Click:Connect(function()
@@ -106,7 +99,6 @@ createButton("Speed Boost", speedBoost, function(btn)
 	end)
 end)
 
--- Aura Range Display
 local rangeDisplay = Instance.new("TextLabel", scrollFrame)
 rangeDisplay.Size = UDim2.new(1, -10, 0, 25)
 rangeDisplay.Position = UDim2.new(0, 5, 0, #scrollFrame:GetChildren() * 32)
@@ -130,7 +122,6 @@ createButton("Range -", false, function(btn)
 	end)
 end)
 
--- Aim Assist (Smooth, Toggle)
 local aimAssist = false
 createButton("Aim Assist", aimAssist, function(btn)
 	btn.MouseButton1Click:Connect(function()
@@ -139,7 +130,6 @@ createButton("Aim Assist", aimAssist, function(btn)
 	end)
 end)
 
--- Infinite Jump Logic
 UserInputService.JumpRequest:Connect(function()
 	if infJump then
 		local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
@@ -149,7 +139,6 @@ UserInputService.JumpRequest:Connect(function()
 	end
 end)
 
--- Kill Aura Logic (360 degrees)
 task.spawn(function()
 	while true do
 		if killAuraOn and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
@@ -175,7 +164,6 @@ task.spawn(function()
 	end
 end)
 
--- Smooth Aim Assist Loop
 RunService.RenderStepped:Connect(function()
 	if aimAssist and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
 		local hrp = lp.Character.HumanoidRootPart
@@ -205,7 +193,6 @@ RunService.RenderStepped:Connect(function()
 	end
 end)
 
--- Infinite Jump Logic
 UserInputService.JumpRequest:Connect(function()
 	if infJump then
 		local hum = lp.Character and lp.Character:FindFirstChildOfClass("Humanoid")
@@ -215,7 +202,6 @@ UserInputService.JumpRequest:Connect(function()
 	end
 end)
 
--- Kill Aura Logic (360 degrees)
 task.spawn(function()
 	while true do
 		if killAuraOn and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
@@ -241,7 +227,6 @@ task.spawn(function()
 	end
 end)
 
--- Smooth Aim Assist Loop
 RunService.RenderStepped:Connect(function()
 	if aimAssist and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
 		local hrp = lp.Character.HumanoidRootPart
