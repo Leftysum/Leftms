@@ -43,54 +43,45 @@ _0x4E0F.InputBegan:Connect(function(input)
     end
 end)
 
-local function _0x2927()
-    _0xBB43.Heartbeat:Connect(function()
-        game.Lighting.FogStart = 100
-        game.Lighting.FogEnd = 500
-        game.Lighting.Brightness = 2
-        game.Lighting.GlobalShadows = false
-        game.Lighting.Ambient = Color3.fromRGB(160, 160, 160)
-        game.Lighting.OutdoorAmbient = Color3.fromRGB(160, 160, 160)
-    end)
-end
-
-_0x2927()
-
 local function _0x3B9F(range)
-    local _0x3775, _0x5D48 = nil, math.huge
-    for _, _0x2F27 in pairs(game.Players:GetPlayers()) do
-        if _0x2F27 ~= _0x44D9 and _0x2F27.Character and _0x2F27.Character:FindFirstChild("HumanoidRootPart") and _0x2F27.Character:FindFirstChild("Humanoid") and _0x2F27.Character.Humanoid.Health > 0 then
-            if _0x2F27.Team ~= _0x44D9.Team then
-                local _0x47D1 = _0x2F27.Character.HumanoidRootPart
-                local _0x1D9A = _0x44D9.Character and _0x44D9.Character:FindFirstChild("HumanoidRootPart")
-                if _0x1D9A then
-                    local _0x32C3 = (_0x47D1.Position - _0x1D9A.Position).Magnitude
-                    if _0x32C3 <= range and _0x32C3 < _0x5D48 then
-                        _0x3775 = _0x47D1
-                        _0x5D48 = _0x32C3
+    local closestTarget = nil
+    local closestDistance = math.huge
+
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= _0x44D9 and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            if player.Team ~= _0x44D9.Team then
+                local targetPart = player.Character.HumanoidRootPart
+                local playerHRP = _0x44D9.Character and _0x44D9.Character:FindFirstChild("HumanoidRootPart")
+                if playerHRP then
+                    local distance = (targetPart.Position - playerHRP.Position).Magnitude
+                    if distance <= range and distance < closestDistance then
+                        closestTarget = targetPart
+                        closestDistance = distance
                     end
                 end
             end
         end
     end
-    return _0x3775
+
+    return closestTarget
 end
 
 local function _0x4B5A(range)
     while true do
-        local _0xE7DA = _0x3B9F(range)
-        if _0xE7DA then
-            local _0x3383 = game.Workspace.CurrentCamera
-            local _0x30E9, _0x47A7 = _0x3383:WorldToViewportPoint(_0xE7DA.Position + Vector3.new(0, 1.5, 0))
-            if _0x47A7 then
-                local _0x56B7 = _0x3383.ViewportSize
-                local _0x6077 = _0x30E9.X / _0x56B7.X
-                local _0x3A5C = _0x30E9.Y / _0x56B7.Y
-                _0xF1C7:SendTouchEvent(1, 0, _0x6077, _0x3A5C) -- Touch begin
-                _0xF1C7:SendTouchEvent(1, 2, _0x6077, _0x3A5C) -- Touch end
+        local target = _0x3B9F(range)
+        if target then
+            local camera = game.Workspace.CurrentCamera
+            local screenPoint = camera:WorldToViewportPoint(target.Position + Vector3.new(0, 1.5, 0))
+            if screenPoint then
+                local viewportSize = camera.ViewportSize
+                local screenX = screenPoint.X / viewportSize.X
+                local screenY = screenPoint.Y / viewportSize.Y
+                -- Simulate Touch Input (Kill Aura click)
+                _0xF1C7:SendTouchEvent(1, 0, screenX, screenY) -- Touch Begin
+                _0xF1C7:SendTouchEvent(1, 2, screenX, screenY) -- Touch End
             end
         end
-        task.wait(0.03)  -- Adjust for speed
+        task.wait(0.1)  -- Adjust speed of the Kill Aura action
     end
 end
 
@@ -99,63 +90,13 @@ _0x1F41.InputBegan:Connect(function(input)
         _0x23D7 = not _0x23D7
         _0x1F41.Text = _0x23D7 and "Auto ON" or "Auto OFF"
         _0x1F41.BackgroundColor3 = _0x23D7 and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-        if _0x23D7 then task.spawn(function() _0x4B5A(15) end) end  -- Set range for Kill Aura
+        if _0x23D7 then task.spawn(_0x4B5A, 15) end -- You can change the range here (default 15 studs)
     end
 end)
-
-local function _0x0A99()
-    -- Simulate "clean" behavior by performing harmless actions like using functions that do nothing
-    task.spawn(function()
-        while true do
-            task.wait(1)
-        end
-    end)
-end
-
-_0x0A99()
 
 game.Players.LocalPlayer.CharacterAdded:Connect(function()
     task.wait(1)
     if not game.Players.LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("LEFTAC") then
         _0x3B21.Parent = _0x44D9:WaitForChild("PlayerGui")
-    end
-end)
-
--- Void Save Toggle
-local voidSaveEnabled = false
-
-local function VoidSave()
-    local function checkFall()
-        local character = _0x44D9.Character
-        if character and character:FindFirstChild("HumanoidRootPart") then
-            local humanoidRootPart = character.HumanoidRootPart
-            if humanoidRootPart.Position.Y < -50 and voidSaveEnabled then  -- You can adjust this threshold
-                local nearestPart = workspace:FindPartOnRay(Ray.new(humanoidRootPart.Position, Vector3.new(0, -10, 0)))
-                if nearestPart and nearestPart.Parent then
-                    humanoidRootPart.CFrame = CFrame.new(nearestPart.Position + Vector3.new(0, 5, 0))
-                end
-            end
-        end
-    end
-    game:GetService("RunService").Heartbeat:Connect(checkFall)
-end
-
-local voidSaveButton = Instance.new("TextButton", _0xE3F5)
-voidSaveButton.Size = UDim2.new(0, 100, 0, 30)
-voidSaveButton.Position = UDim2.new(0, 10, 0, 50)
-voidSaveButton.Text = "Void Save OFF"
-voidSaveButton.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-voidSaveButton.TextColor3 = Color3.new(1, 1, 1)
-voidSaveButton.Font = Enum.Font.SourceSansBold
-voidSaveButton.TextSize = 14
-
-voidSaveButton.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch then
-        voidSaveEnabled = not voidSaveEnabled
-        voidSaveButton.Text = voidSaveEnabled and "Void Save ON" or "Void Save OFF"
-        voidSaveButton.BackgroundColor3 = voidSaveEnabled and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-        if voidSaveEnabled then
-            VoidSave()
-        end
     end
 end)
