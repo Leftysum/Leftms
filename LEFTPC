@@ -1,168 +1,111 @@
+
 local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UserInputService = game:GetService("UserInputService")
+local UIS = game:GetService("UserInputService")
 local lp = Players.LocalPlayer
 local camera = workspace.CurrentCamera
 
--- Feature toggles
-local killAuraOn, infiniteJump, voidSave, fpsBoost, speedBoost = false, false, false, false, false
-local noSwordCooldown, noClickDelay, aimAssist = false, false, false
-local auraRange = 15
-
--- GUI Setup
 local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
-ScreenGui.ResetOnSpawn = false
+ScreenGui.Name = "KA_GUI"
 
-local ToggleButton = Instance.new("TextButton", ScreenGui)
-ToggleButton.Size = UDim2.new(0, 100, 0, 30)
-ToggleButton.Position = UDim2.new(0, 10, 0, 10)
-ToggleButton.Text = "Open GUI"
-ToggleButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0, 180, 0, 260)
+Frame.Position = UDim2.new(0, 10, 0.4, 0)
+Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+Frame.BackgroundTransparency = 0.3
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true
 
-local MainFrame = Instance.new("ScrollingFrame", ScreenGui)
-MainFrame.Size = UDim2.new(0, 200, 0, 300)
-MainFrame.Position = UDim2.new(0, 10, 0, 50)
-MainFrame.CanvasSize = UDim2.new(0, 0, 0, 600)
-MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-MainFrame.Visible = false
-MainFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
-MainFrame.ScrollBarThickness = 6
+local UIList = Instance.new("UIListLayout", Frame)
+UIList.Padding = UDim.new(0, 6)
+UIList.HorizontalAlignment = Enum.HorizontalAlignment.Center
+UIList.SortOrder = Enum.SortOrder.LayoutOrder
 
--- Dragging
-local dragging, dragInput, dragStart, startPos
-local function dragify(frame)
-	frame.InputBegan:Connect(function(input)
-		if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
-			dragging = true
-			dragStart = input.Position
-			startPos = frame.Position
-			input.Changed:Connect(function()
-				if input.UserInputState == Enum.UserInputState.End then dragging = false end
-			end)
-		end
-	end)
-	UserInputService.InputChanged:Connect(function(input)
-		if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
-			local delta = input.Position - dragStart
-			frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-		end
-	end)
-end
-dragify(MainFrame)
-
-ToggleButton.MouseButton1Click:Connect(function()
-	MainFrame.Visible = not MainFrame.Visible
-	ToggleButton.Text = MainFrame.Visible and "Close GUI" or "Open GUI"
-end)
-
--- Create toggle buttons
-local function createToggle(name, default, callback)
+local function createButton(name)
 	local btn = Instance.new("TextButton")
 	btn.Size = UDim2.new(1, -10, 0, 30)
-	btn.Position = UDim2.new(0, 5, 0, (#MainFrame:GetChildren() - 1) * 35)
-	btn.Text = name .. ": " .. (default and "ON" or "OFF")
-	btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-	btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-	btn.Parent = MainFrame
+	btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	btn.TextColor3 = Color3.new(1, 1, 1)
+	btn.TextScaled = true
+	btn.Text = name .. ": OFF"
+	btn.Name = name
+	btn.BorderSizePixel = 0
+	btn.AutoButtonColor = false
+	btn.Font = Enum.Font.GothamBold
 	btn.MouseButton1Click:Connect(function()
-		default = not default
-		btn.Text = name .. ": " .. (default and "ON" or "OFF")
-		callback(default)
+		_G[name] = not _G[name]
+		btn.Text = name .. ": " .. (_G[name] and "ON" or "OFF")
 	end)
+	return btn
 end
 
-createToggle("Kill Aura", killAuraOn, function(state) killAuraOn = state end)
-createToggle("Infinite Jump", infiniteJump, function(state) infiniteJump = state end)
-createToggle("Void Save", voidSave, function(state) voidSave = state end)
-createToggle("FPS Boost", fpsBoost, function(state)
-	fpsBoost = state
-	workspace.FallenPartsDestroyHeight = state and 0 or -500
-	game:GetService("Lighting").Brightness = state and 1 or 3
-end)
-createToggle("Speed Boost", speedBoost, function(state)
-	speedBoost = state
-	if lp.Character and lp.Character:FindFirstChild("Humanoid") then
-		lp.Character.Humanoid.WalkSpeed = state and 20 or 16
-	end
-end)
-createToggle("No Sword Cooldown", noSwordCooldown, function(state) noSwordCooldown = state end)
-createToggle("No Click Delay", noClickDelay, function(state) noClickDelay = state end)
-createToggle("Aim Assist", aimAssist, function(state) aimAssist = state end)
+local KillAuraBtn = createButton("KillAura")
+local InfiniteJumpBtn = createButton("InfiniteJump")
+local VoidSaveBtn = createButton("VoidSave")
+local FPSBoostBtn = createButton("FPSBoost")
+local SpeedBoostBtn = createButton("SpeedBoost")
+local NoSwordCooldownBtn = createButton("NoSwordCooldown")
+local NoClickDelayBtn = createButton("NoClickDelay")
+local AimAssistBtn = createButton("AimAssist")
 
--- Infinite Jump
-UserInputService.JumpRequest:Connect(function()
-	if infiniteJump and lp.Character and lp.Character:FindFirstChild("Humanoid") then
-		lp.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-	end
+KillAuraBtn.Parent = Frame
+InfiniteJumpBtn.Parent = Frame
+VoidSaveBtn.Parent = Frame
+FPSBoostBtn.Parent = Frame
+SpeedBoostBtn.Parent = Frame
+NoSwordCooldownBtn.Parent = Frame
+NoClickDelayBtn.Parent = Frame
+AimAssistBtn.Parent = Frame
+
+local killAuraOn = false
+local auraRange = 15
+
+KillAuraBtn.MouseButton1Click:Connect(function()
+	killAuraOn = not killAuraOn
+	KillAuraBtn.Text = "KillAura: " .. (killAuraOn and "ON" or "OFF")
 end)
 
--- Void Save
-RunService.Heartbeat:Connect(function()
-	if voidSave and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-		if lp.Character.HumanoidRootPart.Position.Y < -20 then
-			lp.Character.HumanoidRootPart.Velocity = Vector3.new(0, 50, 0)
+local function isEnemy(player)
+	return player.Team ~= lp.Team
+end
+
+local function getClosestEnemy()
+	if not lp.Character or not lp.Character:FindFirstChild("HumanoidRootPart") then return nil end
+	local closest, shortest = nil, auraRange
+	for _, player in pairs(Players:GetPlayers()) do
+		if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+			if player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
+				if isEnemy(player) then
+					local dist = (player.Character.HumanoidRootPart.Position - lp.Character.HumanoidRootPart.Position).Magnitude
+					if dist <= shortest then
+						shortest = dist
+						closest = player
+					end
+				end
+			end
 		end
 	end
-end)
+	return closest
+end
 
--- Speed Reset on Respawn
-lp.CharacterAdded:Connect(function(char)
-	char:WaitForChild("Humanoid").WalkSpeed = speedBoost and 20 or 16
-end)
-
--- Kill Aura
-local function attackTarget(target)
+local function attackTarget(targetPlayer)
+	if not targetPlayer or not targetPlayer.Character then return end
 	local tool = lp.Character and lp.Character:FindFirstChildOfClass("Tool")
-	if tool and target and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
+	if tool then
 		local remote = tool:FindFirstChildWhichIsA("RemoteEvent", true)
-		if remote then
-			remote:FireServer(target)
+		if remote and typeof(remote.FireServer) == "function" then
+			remote:FireServer(targetPlayer.Character)
 		end
 	end
 end
 
 task.spawn(function()
 	while task.wait(0.1) do
-		if killAuraOn and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-			local hrp = lp.Character.HumanoidRootPart
-			for _, player in pairs(Players:GetPlayers()) do
-				if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-					local target = player.Character
-					local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
-					if dist <= auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
-						attackTarget(target)
-					end
-				end
+		if killAuraOn then
+			local target = getClosestEnemy()
+			if target then
+				attackTarget(target)
 			end
-		end
-	end
-end)
-
--- Aim Assist
-RunService.RenderStepped:Connect(function()
-	if aimAssist and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-		local cam = workspace.CurrentCamera
-		local hrp = lp.Character.HumanoidRootPart
-		local closest, shortest = nil, math.huge
-
-		for _, player in pairs(Players:GetPlayers()) do
-			if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-				local target = player.Character
-				local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
-				if dist <= auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
-					local screenPos, onScreen = cam:WorldToViewportPoint(target.HumanoidRootPart.Position)
-					if onScreen and dist < shortest then
-						shortest = dist
-						closest = target
-					end
-				end
-			end
-		end
-
-		if closest then
-			local direction = (closest.HumanoidRootPart.Position - cam.CFrame.Position).Unit
-			cam.CFrame = cam.CFrame:Lerp(CFrame.lookAt(cam.CFrame.Position, cam.CFrame.Position + direction), 0.15)
 		end
 	end
 end)
