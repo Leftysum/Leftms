@@ -14,9 +14,9 @@ mainFrame.Position = UDim2.new(1, -260, 0, 40)
 mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 mainFrame.BackgroundTransparency = 0.2
 mainFrame.BorderSizePixel = 0
-mainFrame.Visible = false -- Start with GUI hidden
+mainFrame.Visible = false -- Start hidden
 
--- Toggle Button (Open/Close)
+-- Toggle Open/Close Button
 local toggleButton = Instance.new("TextButton", gui)
 toggleButton.Size = UDim2.new(0, 50, 0, 50)
 toggleButton.Position = UDim2.new(1, -60, 0, 40)
@@ -25,64 +25,65 @@ toggleButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 toggleButton.TextColor3 = Color3.new(1, 1, 1)
 toggleButton.Font = Enum.Font.SourceSansBold
 toggleButton.TextSize = 24
-
 toggleButton.MouseButton1Click:Connect(function()
 	mainFrame.Visible = not mainFrame.Visible
 end)
 
--- Scrollable Frame Inside Main Frame
+-- Scroll Frame
 local scrollFrame = Instance.new("ScrollingFrame", mainFrame)
-scrollFrame.Size = UDim2.new(1, 0, 1, -50)
-scrollFrame.Position = UDim2.new(0, 0, 0, 50)
-scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 400)
+scrollFrame.Size = UDim2.new(1, 0, 1, 0)
+scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 600)
 scrollFrame.ScrollBarThickness = 6
-scrollFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-scrollFrame.BackgroundTransparency = 0.2
+scrollFrame.BackgroundTransparency = 1
 scrollFrame.BorderSizePixel = 0
-scrollFrame.Active = true
-scrollFrame.Draggable = true
+scrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+scrollFrame.CanvasPosition = Vector2.zero
 
--- Utility: Create Button
-local function createButton(name, callback)
-	local btn = Instance.new("TextButton", scrollFrame)
-	btn.Size = UDim2.new(1, -10, 0, 30)
-	btn.Position = UDim2.new(0, 5, 0, #scrollFrame:GetChildren() * 32)
-	btn.Text = name
-	btn.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-	btn.TextColor3 = Color3.new(1, 1, 1)
-	btn.Font = Enum.Font.SourceSansBold
-	btn.TextSize = 14
-	btn.MouseButton1Click:Connect(callback)
+-- Utility to create toggle button
+local buttonY = 0
+local function createToggle(label, state, callback)
+	local button = Instance.new("TextButton")
+	button.Size = UDim2.new(1, -10, 0, 40)
+	button.Position = UDim2.new(0, 5, 0, buttonY)
+	buttonY = buttonY + 45
+	button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+	button.TextColor3 = Color3.new(1, 1, 1)
+	button.Font = Enum.Font.SourceSansBold
+	button.TextSize = 16
+	button.Text = label .. ": OFF"
+	button.Parent = scrollFrame
+
+	local on = state
+	button.MouseButton1Click:Connect(function()
+		on = not on
+		button.Text = label .. ": " .. (on and "ON" or "OFF")
+		callback(on, button)
+	end)
+	return button
 end
 
--- Kill Aura (with Range)
-local killAuraOn = false
+-- Features
+local killAura = false
+local infiniteJump = false
+local fpsBoost = false
+local speedBoost = false
 local auraRange = 15
-local killAuraButton
 
-killAuraButton = createButton("Kill Aura: OFF", function()
-	killAuraOn = not killAuraOn
-	killAuraButton.Text = killAuraOn and "Kill Aura: ON" or "Kill Aura: OFF"
+-- Kill Aura Toggle
+createToggle("Kill Aura", killAura, function(state)
+	killAura = state
 end)
 
 -- Infinite Jump
-local infJump = false
-local infJumpButton
-
-infJumpButton = createButton("Infinite Jump: OFF", function()
-	infJump = not infJump
-	infJumpButton.Text = infJump and "Infinite Jump: ON" or "Infinite Jump: OFF"
+createToggle("Infinite Jump", infiniteJump, function(state)
+	infiniteJump = state
 end)
 
 -- FPS Boost
-local fpsBoost = false
-local fpsBoostButton
-
-fpsBoostButton = createButton("FPS Boost: OFF", function()
-	fpsBoost = not fpsBoost
-	fpsBoostButton.Text = fpsBoost and "FPS Boost: ON" or "FPS Boost: OFF"
-
-	if fpsBoost then
+createToggle("FPS Boost", fpsBoost, function(state)
+	fpsBoost = state
+	if state then
 		Lighting.FogEnd = 1000
 		Lighting.FogStart = 0
 		Lighting.Brightness = 1
@@ -90,73 +91,79 @@ fpsBoostButton = createButton("FPS Boost: OFF", function()
 		Lighting.Ambient = Color3.fromRGB(100, 100, 100)
 		Lighting.OutdoorAmbient = Color3.fromRGB(100, 100, 100)
 		Lighting.Sky = nil
-		local sky = Instance.new("Sky", Lighting)
-		sky.SkyboxBk = ""
-		sky.SkyboxDn = ""
-		sky.SkyboxFt = ""
-		sky.SkyboxLf = ""
-		sky.SkyboxRt = ""
-		sky.SkyboxUp = ""
+	else
+		Lighting.FogEnd = 100000
+		Lighting.GlobalShadows = true
 	end
 end)
 
 -- Speed Boost
-local speedBoost = false
-local speedBoostButton
-
-speedBoostButton = createButton("Speed Boost: OFF", function()
-	speedBoost = not speedBoost
-	speedBoostButton.Text = speedBoost and "Speed Boost: ON" or "Speed Boost: OFF"
-
+createToggle("Speed Boost", speedBoost, function(state)
+	speedBoost = state
 	if lp.Character and lp.Character:FindFirstChild("Humanoid") then
-		lp.Character.Humanoid.WalkSpeed = speedBoost and 20 or 16 -- 20 is safe WalkSpeed
+		lp.Character.Humanoid.WalkSpeed = state and 20 or 16
 	end
 end)
 
--- Range Setting
-local rangeDisplay = Instance.new("TextLabel", scrollFrame)
-rangeDisplay.Size = UDim2.new(1, -10, 0, 25)
-rangeDisplay.Position = UDim2.new(0, 5, 0, #scrollFrame:GetChildren() * 32)
-rangeDisplay.Text = "Aura Range: 15"
-rangeDisplay.TextColor3 = Color3.new(1, 1, 1)
-rangeDisplay.BackgroundTransparency = 1
-rangeDisplay.Font = Enum.Font.SourceSansBold
-rangeDisplay.TextSize = 14
+-- Aura Range Display
+local rangeLabel = Instance.new("TextLabel", scrollFrame)
+rangeLabel.Size = UDim2.new(1, -10, 0, 30)
+rangeLabel.Position = UDim2.new(0, 5, 0, buttonY)
+rangeLabel.TextColor3 = Color3.new(1, 1, 1)
+rangeLabel.BackgroundTransparency = 1
+rangeLabel.Font = Enum.Font.SourceSansBold
+rangeLabel.TextSize = 14
+rangeLabel.Text = "Aura Range: " .. auraRange
+buttonY = buttonY + 35
 
-createButton("Range +", function()
+-- Range Buttons
+local plus = Instance.new("TextButton", scrollFrame)
+plus.Size = UDim2.new(0.5, -7, 0, 30)
+plus.Position = UDim2.new(0, 5, 0, buttonY)
+plus.Text = "Range +"
+plus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+plus.TextColor3 = Color3.new(1, 1, 1)
+plus.Font = Enum.Font.SourceSansBold
+plus.TextSize = 14
+plus.MouseButton1Click:Connect(function()
 	auraRange = math.clamp(auraRange + 1, 1, 18)
-	rangeDisplay.Text = "Aura Range: " .. auraRange
+	rangeLabel.Text = "Aura Range: " .. auraRange
 end)
 
-createButton("Range -", function()
+local minus = Instance.new("TextButton", scrollFrame)
+minus.Size = UDim2.new(0.5, -7, 0, 30)
+minus.Position = UDim2.new(0.5, 2, 0, buttonY)
+minus.Text = "Range -"
+minus.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+minus.TextColor3 = Color3.new(1, 1, 1)
+minus.Font = Enum.Font.SourceSansBold
+minus.TextSize = 14
+minus.MouseButton1Click:Connect(function()
 	auraRange = math.clamp(auraRange - 1, 1, 18)
-	rangeDisplay.Text = "Aura Range: " .. auraRange
+	rangeLabel.Text = "Aura Range: " .. auraRange
 end)
+buttonY = buttonY + 35
 
 -- Infinite Jump Logic
 game:GetService("UserInputService").JumpRequest:Connect(function()
-	if infJump then
+	if infiniteJump and lp.Character and lp.Character:FindFirstChildOfClass("Humanoid") then
 		lp.Character:FindFirstChildOfClass("Humanoid"):ChangeState(Enum.HumanoidStateType.Jumping)
 	end
 end)
 
--- Kill Aura Logic (360 Degree)
+-- Kill Aura Logic (360 degree + Mobile Touch Sim)
 task.spawn(function()
 	while true do
-		if killAuraOn and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
-			local hrp = lp.Character.HumanoidRootPart
+		if killAura and lp.Character and lp.Character:FindFirstChild("HumanoidRootPart") then
 			for _, player in pairs(Players:GetPlayers()) do
 				if player ~= lp and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-					local target = player.Character
-					local dist = (target.HumanoidRootPart.Position - hrp.Position).Magnitude
-					if dist <= auraRange and target:FindFirstChild("Humanoid") and target.Humanoid.Health > 0 then
-						-- No camera or direction check, will hit any player within the range
+					local dist = (lp.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+					if dist <= auraRange then
 						local cam = workspace.CurrentCamera
-						local screenPos, onScreen = cam:WorldToViewportPoint(target.HumanoidRootPart.Position)
+						local screenPos, onScreen = cam:WorldToViewportPoint(player.Character.HumanoidRootPart.Position)
 						if onScreen then
 							local x = screenPos.X / cam.ViewportSize.X
 							local y = screenPos.Y / cam.ViewportSize.Y
-							-- Simulate touch input
 							VirtualInput:SendTouchEvent(1, 0, x, y)
 							VirtualInput:SendTouchEvent(1, 2, x, y)
 						end
@@ -168,43 +175,31 @@ task.spawn(function()
 	end
 end)
 
--- GUI persist on respawn
-lp.CharacterAdded:Connect(function()
-	task.wait(1)
-	if not lp:FindFirstChild("PlayerGui"):FindFirstChild("BedWarsScript") then
-		gui.Parent = lp:WaitForChild("PlayerGui")
+-- Fix speed on respawn
+lp.CharacterAdded:Connect(function(char)
+	char:WaitForChild("Humanoid")
+	if speedBoost then
+		char.Humanoid.WalkSpeed = 20
 	end
 end)
 
--- Touch input for the GUI (Mobile Compatibility)
-scrollFrame.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.Touch then
-		-- Add your custom touch input handling logic here
-		-- (for example, drag the GUI frame)
-	end
-end)
-
--- Draggable GUI Functionality
-local dragging = false
-local dragInput, dragStart, startPos
-
+-- Draggable GUI (Mobile Compatible)
+local dragging, dragInput, dragStart, startPos
 mainFrame.InputBegan:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+	if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
 		dragging = true
 		dragStart = input.Position
 		startPos = mainFrame.Position
 	end
 end)
-
 mainFrame.InputChanged:Connect(function(input)
-	if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+	if dragging and (input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseMovement) then
 		local delta = input.Position - dragStart
 		mainFrame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
 	end
 end)
-
 mainFrame.InputEnded:Connect(function(input)
-	if input.UserInputType == Enum.UserInputType.MouseButton1 then
+	if input.UserInputType == Enum.UserInputType.Touch or input.UserInputType == Enum.UserInputType.MouseButton1 then
 		dragging = false
 	end
 end)
