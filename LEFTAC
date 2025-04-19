@@ -1,102 +1,127 @@
-local _0xF1C7 = game:GetService("VirtualInputManager")
-local _0x44D9 = game.Players.LocalPlayer
-local _0xBB43 = game:GetService("RunService")
+local VirtualInput = game:GetService("VirtualInputManager")
+local LocalPlayer = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
 
-local _0x3B21 = Instance.new("ScreenGui", _0x44D9:WaitForChild("PlayerGui"))
-_0x3B21.Name = "LEFTAC"
-_0x3B21.ResetOnSpawn = false
+-- GUI Setup
+local ScreenGui = Instance.new("ScreenGui", LocalPlayer:WaitForChild("PlayerGui"))
+ScreenGui.Name = "LEFTAC"
+ScreenGui.ResetOnSpawn = false
 
-local _0xE3F5 = Instance.new("Frame", _0x3B21)
-_0xE3F5.Size = UDim2.new(0, 120, 0, 80)
-_0xE3F5.Position = UDim2.new(1, -130, 0, 30)
-_0xE3F5.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-_0xE3F5.BackgroundTransparency = 0.2
-_0xE3F5.BorderSizePixel = 0
-_0xE3F5.Visible = false
-_0xE3F5.Active = true
-_0xE3F5.Draggable = true
+local MainFrame = Instance.new("Frame", ScreenGui)
+MainFrame.Size = UDim2.new(0, 140, 0, 120)
+MainFrame.Position = UDim2.new(1, -150, 0, 30)
+MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+MainFrame.BackgroundTransparency = 0.2
+MainFrame.BorderSizePixel = 0
+MainFrame.Visible = false
+MainFrame.Active = true
+MainFrame.Draggable = true
 
-local _0x1F41 = Instance.new("TextButton", _0xE3F5)
-_0x1F41.Size = UDim2.new(0, 100, 0, 30)
-_0x1F41.Position = UDim2.new(0, 10, 0, 10)
-_0x1F41.Text = "Auto OFF"
-_0x1F41.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
-_0x1F41.TextColor3 = Color3.new(1, 1, 1)
-_0x1F41.Font = Enum.Font.SourceSansBold
-_0x1F41.TextSize = 14
+local ToggleAura = Instance.new("TextButton", MainFrame)
+ToggleAura.Size = UDim2.new(0, 120, 0, 30)
+ToggleAura.Position = UDim2.new(0, 10, 0, 10)
+ToggleAura.Text = "Kill Aura OFF"
+ToggleAura.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+ToggleAura.TextColor3 = Color3.new(1, 1, 1)
+ToggleAura.Font = Enum.Font.SourceSansBold
+ToggleAura.TextSize = 14
 
-local _0x4E0F = Instance.new("TextButton", _0x3B21)
-_0x4E0F.Size = UDim2.new(0, 90, 0, 28)
-_0x4E0F.Position = UDim2.new(1, -100, 0, 10)
-_0x4E0F.Text = "Open LEFTAC"
-_0x4E0F.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-_0x4E0F.BackgroundTransparency = 0.3
-_0x4E0F.TextColor3 = Color3.new(1, 1, 1)
-_0x4E0F.Font = Enum.Font.SourceSansSemibold
-_0x4E0F.TextSize = 13
-_0x4E0F.AutoButtonColor = true
+local ToggleIJ = Instance.new("TextButton", MainFrame)
+ToggleIJ.Size = UDim2.new(0, 120, 0, 30)
+ToggleIJ.Position = UDim2.new(0, 10, 0, 50)
+ToggleIJ.Text = "Inf Jump OFF"
+ToggleIJ.BackgroundColor3 = Color3.fromRGB(255, 0, 0)
+ToggleIJ.TextColor3 = Color3.new(1, 1, 1)
+ToggleIJ.Font = Enum.Font.SourceSansBold
+ToggleIJ.TextSize = 14
 
-_0x4E0F.InputBegan:Connect(function(input)
+local ToggleMain = Instance.new("TextButton", ScreenGui)
+ToggleMain.Size = UDim2.new(0, 100, 0, 28)
+ToggleMain.Position = UDim2.new(1, -110, 0, 5)
+ToggleMain.Text = "Open LEFTAC"
+ToggleMain.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+ToggleMain.BackgroundTransparency = 0.3
+ToggleMain.TextColor3 = Color3.new(1, 1, 1)
+ToggleMain.Font = Enum.Font.SourceSansSemibold
+ToggleMain.TextSize = 13
+
+ToggleMain.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.Touch then
-        _0xE3F5.Visible = not _0xE3F5.Visible
-        _0x4E0F.Text = _0xE3F5.Visible and "Close LEFTAC" or "Open LEFTAC"
+        MainFrame.Visible = not MainFrame.Visible
+        ToggleMain.Text = MainFrame.Visible and "Close LEFTAC" or "Open LEFTAC"
     end
 end)
 
-local function _0x3B9F(range)
-    local closestTarget = nil
-    local closestDistance = math.huge
+-- Kill Aura Logic
+local auraOn = false
+local auraRange = 15
 
-    for _, player in pairs(game.Players:GetPlayers()) do
-        if player ~= _0x44D9 and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
-            if player.Team ~= _0x44D9.Team then
-                local targetPart = player.Character.HumanoidRootPart
-                local playerHRP = _0x44D9.Character and _0x44D9.Character:FindFirstChild("HumanoidRootPart")
-                if playerHRP then
-                    local distance = (targetPart.Position - playerHRP.Position).Magnitude
-                    if distance <= range and distance < closestDistance then
-                        closestTarget = targetPart
-                        closestDistance = distance
-                    end
+function getClosestTarget(range)
+    local closest, dist = nil, math.huge
+    for _, plr in pairs(game.Players:GetPlayers()) do
+        if plr ~= LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") and plr.Team ~= LocalPlayer.Team then
+            local myHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if myHRP then
+                local d = (plr.Character.HumanoidRootPart.Position - myHRP.Position).Magnitude
+                if d < range and d < dist then
+                    closest = plr.Character.HumanoidRootPart
+                    dist = d
                 end
             end
         end
     end
-
-    return closestTarget
+    return closest
 end
 
-local function _0x4B5A(range)
+task.spawn(function()
     while true do
-        local target = _0x3B9F(range)
-        if target then
-            local camera = game.Workspace.CurrentCamera
-            local screenPoint = camera:WorldToViewportPoint(target.Position + Vector3.new(0, 1.5, 0))
-            if screenPoint then
-                local viewportSize = camera.ViewportSize
-                local screenX = screenPoint.X / viewportSize.X
-                local screenY = screenPoint.Y / viewportSize.Y
-                -- Simulate Touch Input (Kill Aura click)
-                _0xF1C7:SendTouchEvent(1, 0, screenX, screenY) -- Touch Begin
-                _0xF1C7:SendTouchEvent(1, 2, screenX, screenY) -- Touch End
+        if auraOn then
+            local target = getClosestTarget(auraRange)
+            if target then
+                local cam = workspace.CurrentCamera
+                local screenPos = cam:WorldToViewportPoint(target.Position)
+                local view = cam.ViewportSize
+                local x, y = screenPos.X / view.X, screenPos.Y / view.Y
+                VirtualInput:SendTouchEvent(1, 0, x, y) -- Touch begin
+                VirtualInput:SendTouchEvent(1, 2, x, y) -- Touch end
             end
         end
-        task.wait(0.1)  -- Adjust speed of the Kill Aura action
-    end
-end
-
-_0x1F41.InputBegan:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.Touch then
-        _0x23D7 = not _0x23D7
-        _0x1F41.Text = _0x23D7 and "Auto ON" or "Auto OFF"
-        _0x1F41.BackgroundColor3 = _0x23D7 and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
-        if _0x23D7 then task.spawn(_0x4B5A, 15) end -- You can change the range here (default 15 studs)
+        task.wait(0.1)
     end
 end)
 
-game.Players.LocalPlayer.CharacterAdded:Connect(function()
+ToggleAura.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        auraOn = not auraOn
+        ToggleAura.Text = auraOn and "Kill Aura ON" or "Kill Aura OFF"
+        ToggleAura.BackgroundColor3 = auraOn and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+    end
+end)
+
+-- Infinite Jump
+local ijOn = false
+
+ToggleIJ.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch then
+        ijOn = not ijOn
+        ToggleIJ.Text = ijOn and "Inf Jump ON" or "Inf Jump OFF"
+        ToggleIJ.BackgroundColor3 = ijOn and Color3.fromRGB(0, 255, 0) or Color3.fromRGB(255, 0, 0)
+    end
+end)
+
+game:GetService("UserInputService").JumpRequest:Connect(function()
+    if ijOn then
+        local human = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+        if human then
+            human:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+-- Respawn handler
+LocalPlayer.CharacterAdded:Connect(function()
     task.wait(1)
-    if not game.Players.LocalPlayer:FindFirstChild("PlayerGui"):FindFirstChild("LEFTAC") then
-        _0x3B21.Parent = _0x44D9:WaitForChild("PlayerGui")
+    if not LocalPlayer.PlayerGui:FindFirstChild("LEFTAC") then
+        ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
     end
 end)
